@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>STANCHILLOW v0.24.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Roboto Condensed', sans-serif; color: #e8e8e8; }
+#rotator { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; background: #0a0a0c; }
+body.portrait #rotator { top: 50%; left: 50%; width: 100vh; height: 100vw; transform: translate(-50%, -50%) rotate(90deg); transform-origin: center center; }
+.screen { display: none; width: 100%; height: 100%; }
+.screen.active { display: flex; }
+#rise-splash, #fireborn-loading, #login-screen, #patch-notes, #avatar-modal, #nick-modal, #mail-view-modal, #case-open-modal, #gameplay-locked-modal, #old-versions-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+#toast { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(60,60,70,0.95); color: #fff; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 14px; transition: 0.3s; z-index: 99999; opacity: 0; pointer-events: none; white-space: nowrap; max-width: 90%; text-align: center; }
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+#toast.success { background: rgba(74,222,128,0.95); color: #000; }
+.currency-wrap { position: absolute; top: 12px; right: 12px; z-index: 50; display: flex; gap: 8px; pointer-events: none; }
+#fps-display { position: absolute; top: 60px; right: 12px; z-index: 999; background: rgba(0,0,0,0.7); border: 1px solid rgba(160,160,180,0.4); color: #c0c0d0; padding: 5px 12px; border-radius: 6px; font-weight: 900; font-size: 12px; font-family: 'Courier New', monospace; display: none; pointer-events: none; }
+#fps-display.show { display: block; }
+#fps-display .val { color: #fff; }
+#app { width: 100%; height: 100%; display: flex; }
+.btn-back { background: rgba(60,60,70,0.25); border: 2px solid rgba(160,160,180,0.4); color: #d0d0d0; padding: 10px 22px; border-radius: 8px; font-weight: 900; font-size: 13px; cursor: pointer; font-family: inherit; letter-spacing: 2px; display: inline-flex; align-items: center; gap: 8px; z-index: 200; }
+.btn-back::before { content: '←'; font-size: 18px; }
+.btn-back-corner { position: absolute; top: 12px; right: 12px; z-index: 200; }
+
+/* SPLASH RISE GAMING */
+#rise-splash { z-index: 10001; background: #000; display: none; justify-content: center; align-items: center; cursor: pointer; }
+#rise-splash.active { display: flex; }
+.rise-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Roboto Condensed', sans-serif; font-size: clamp(40px, 10vw, 110px); font-weight: 900; letter-spacing: 6px; color: #3a3a3f; opacity: 0; animation: riseIn 2.5s ease-out forwards; }
+@keyframes riseIn { 0% { opacity: 0; letter-spacing: 30px; } 60% { opacity: 1; letter-spacing: 6px; } 100% { opacity: 1; } }
+.unity-badge { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; opacity: 0; animation: unityIn 2s ease-out 1.2s forwards; }
+@keyframes unityIn { from { opacity: 0; } to { opacity: 1; } }
+.unity-made-by { font-size: 10px; letter-spacing: 2px; color: #3a3a3f; text-align: right; line-height: 1.4; font-weight: 700; }
+.unity-logo-box { width: 38px; height: 38px; position: relative; }
+.unity-logo-box::before { content: ''; position: absolute; inset: 0; background: #3a3a3f; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.unity-logo-box::after { content: ''; position: absolute; inset: 5px; background: #000; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.unity-logo-box .inner { position: absolute; inset: 11px; background: #3a3a3f; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.unity-name { font-family: 'Roboto Condensed', sans-serif; font-size: 26px; font-weight: 900; color: #3a3a3f; }
+
+/* FIREBORN LOADING */
+#fireborn-loading { z-index: 9500; display: none; background: radial-gradient(ellipse at 60% 40%, #1a1a20 0%, #0a0a0c 60%, #000 100%); position: relative; overflow: hidden; }
+#fireborn-loading.active { display: flex; }
+.fb-bg-blur { position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 60%, rgba(80,80,90,0.35) 0%, transparent 60%), radial-gradient(ellipse at 30% 30%, rgba(50,50,60,0.4) 0%, transparent 55%); filter: blur(40px); }
+.fb-city-bg { position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(180deg, transparent 0%, rgba(20,20,25,0.6) 60%, rgba(10,10,12,0.95) 100%); }
+.fb-logo-wrap { position: absolute; top: 50%; left: 8%; transform: translateY(-50%); z-index: 5; max-width: 42%; }
+.fb-studio-line { font-family: 'Roboto Condensed', sans-serif; font-size: clamp(24px, 4vw, 48px); font-weight: 900; letter-spacing: 3px; color: #d0d0d8; margin-bottom: 15px; }
+.fb-studio-line .accent { color: #a01818; }
+.fb-dragon-emblem { width: clamp(140px, 20vw, 240px); height: clamp(140px, 20vw, 240px); margin-bottom: 15px; filter: drop-shadow(0 0 25px rgba(160,24,24,0.6)); }
+.fb-event-title { font-family: 'UnifrakturCook', 'Bebas Neue', serif; font-size: clamp(48px, 9vw, 105px); letter-spacing: 3px; color: #e8e8e8; text-shadow: 2px 2px 0 #1a1a20, 0 0 30px rgba(160,24,24,0.5); font-weight: 700; line-height: 1; }
+.fb-soldier { position: absolute; top: 50%; right: 3%; transform: translateY(-50%); z-index: 4; width: 42%; max-width: 500px; height: 88%; pointer-events: none; filter: drop-shadow(-25px 0 40px rgba(0,0,0,0.8)); }
+.fb-s-head { position: absolute; top: 6%; left: 52%; transform: translateX(-50%); width: 30%; height: 18%; }
+.fb-s-helmet { position: absolute; top: 0; left: 0; right: 0; height: 55%; background: linear-gradient(180deg, #4a5a7a 0%, #2a3550 100%); border-radius: 50% 50% 30% 30% / 70% 70% 30% 30%; box-shadow: inset 0 -10px 15px rgba(0,0,0,0.5); border: 2px solid #1a1a25; }
+.fb-s-goggles { position: absolute; top: 22%; left: 8%; right: 8%; height: 30%; background: linear-gradient(180deg, #2a2a30 0%, #101015 100%); border-radius: 6px; border: 2px solid #0a0a0f; }
+.fb-s-goggles::before { content: ''; position: absolute; top: 25%; left: 8%; right: 8%; height: 50%; background: linear-gradient(180deg, #6a8ab0 0%, #3a5a80 100%); border-radius: 3px; opacity: 0.7; }
+.fb-s-mask { position: absolute; top: 48%; left: 12%; right: 12%; bottom: 0; background: linear-gradient(180deg, #1a1a1f 0%, #0a0a0f 100%); border-radius: 10% 10% 40% 40%; }
+.fb-s-body { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); width: 55%; height: 78%; background: linear-gradient(180deg, #3a4a6a 0%, #2a3555 40%, #1a2540 100%); border-radius: 15% 15% 8% 8% / 25% 25% 5% 5%; }
+.fb-s-vest { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); width: 92%; height: 65%; background: linear-gradient(180deg, #3a3a3f 0%, #1a1a1f 100%); border-radius: 8% 8% 5% 5%; border: 2px solid #0a0a0f; }
+.fb-s-vest::after { content: 'AG 4'; position: absolute; top: 8%; left: 50%; transform: translateX(-50%); color: #6a6a70; font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 1px; }
+.fb-s-pocket { position: absolute; top: 55%; right: 8%; width: 22%; height: 25%; background: #2a2a30; border-radius: 4px; border: 1px solid #0a0a0f; }
+.fb-s-armL { position: absolute; top: 30%; left: -8%; width: 25%; height: 50%; background: linear-gradient(180deg, #3a4a6a 0%, #1a2540 100%); border-radius: 40% 30% 30% 40%; border: 2px solid #0a0a0f; }
+.fb-s-armR { position: absolute; top: 30%; right: -8%; width: 25%; height: 50%; background: linear-gradient(180deg, #3a4a6a 0%, #1a2540 100%); border-radius: 30% 40% 40% 30%; border: 2px solid #0a0a0f; }
+.fb-rifle-main { position: absolute; top: 25%; left: -5%; width: 100%; height: 6px; background: linear-gradient(90deg, #0a0a0f 0%, #2a2a30 30%, #1a1a1f 70%, #0a0a0f 100%); border-radius: 2px; transform: rotate(-35deg); transform-origin: right center; }
+.fb-rifle-main::after { content: ''; position: absolute; left: 30%; top: -8px; width: 40%; height: 16px; background: linear-gradient(180deg, #3a3a3f 0%, #1a1a1f 100%); border-radius: 3px; }
+.fb-rifle-stock { position: absolute; top: 45%; right: 5%; width: 30%; height: 8%; background: linear-gradient(180deg, #2a2a30 0%, #0a0a0f 100%); border-radius: 6px; transform: rotate(-35deg); }
+.fb-rifle-mag { position: absolute; top: 38%; left: 45%; width: 10%; height: 18%; background: linear-gradient(180deg, #2a2a30 0%, #0a0a0f 100%); border-radius: 0 0 6px 6px; transform: rotate(-35deg); }
+.fb-load-bottom { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; align-items: center; gap: 15px; }
+.fb-circle-loader { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(200,200,210,0.2); border-top-color: #e8e8e8; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.fb-load-text { font-size: 15px; color: #d0d0d8; letter-spacing: 2px; font-weight: 700; }
+.fb-version-corner { position: absolute; bottom: 20px; right: 30px; font-size: 11px; color: rgba(200,200,210,0.4); letter-spacing: 3px; font-weight: 900; z-index: 16; }
+
+/* LOGIN */
+#login-screen { z-index: 9000; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 25px; background: radial-gradient(ellipse at 50% 30%, #1a1a20 0%, #0a0a0c 60%, #000 100%); position: relative; overflow: hidden; }
+#login-screen.active { display: flex; }
+.login-bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(160,160,180,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(160,160,180,0.04) 1px, transparent 1px); background-size: 50px 50px; }
+.login-content { position: relative; z-index: 5; width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; }
+.login-logo { font-family: 'Bebas Neue', sans-serif; font-size: clamp(48px, 9vw, 78px); letter-spacing: 8px; color: #e8e8e8; text-shadow: 0 0 30px rgba(160,160,180,0.5); margin-bottom: 4px; line-height: 1; }
+.login-sub { font-family: 'Bebas Neue', sans-serif; font-size: clamp(16px, 3vw, 24px); letter-spacing: 12px; color: #909098; margin-bottom: 40px; }
+.login-title { font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 4px; margin-bottom: 6px; }
+.login-desc { font-size: 12px; color: #707078; letter-spacing: 2px; margin-bottom: 30px; text-align: center; }
+.login-btn { width: 100%; padding: 15px 20px; border-radius: 10px; font-family: inherit; font-weight: 900; font-size: 15px; cursor: pointer; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; border: none; }
+.login-btn.google { background: #fff; color: #333; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+.login-btn.google svg { width: 22px; height: 22px; flex-shrink: 0; }
+.login-btn.guest { background: rgba(60,60,70,0.3); color: #505058; border: 2px solid rgba(100,100,110,0.3); cursor: not-allowed; position: relative; }
+.login-btn.guest::after { content: 'СКОРО'; position: absolute; top: -8px; right: 12px; background: linear-gradient(90deg, #6a6a75, #909098); color: #fff; font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 10px; letter-spacing: 2px; }
+.login-or { font-size: 11px; color: #4a4a55; letter-spacing: 3px; margin: 15px 0 10px; }
+.login-terms { font-size: 10px; color: #4a4a55; letter-spacing: 1px; margin-top: 20px; text-align: center; line-height: 1.6; }
+.login-terms a { color: #909098; text-decoration: none; }
+
+/* CURRENCY */
+.gold-display, .silver-display { display: none; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; font-weight: 900; font-size: 13px; pointer-events: none; }
+.gold-display { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; border: 1px solid rgba(255,255,255,0.3); }
+.silver-display { background: linear-gradient(135deg, #c0c0c0, #909090); color: #000; border: 1px solid rgba(255,255,255,0.3); }
+.gold-display.show, .silver-display.show { display: flex; }
+.coin-icon { width: 16px; height: 16px; border-radius: 50%; display: inline-block; position: relative; flex-shrink: 0; }
+.coin-gold { background: radial-gradient(circle at 35% 30%, #fff5b0 0%, #ffd700 40%, #b8860b 100%); }
+.coin-gold::after { content: 'S'; position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: 900; color: #8b6914; font-family: 'Bebas Neue', sans-serif; }
+.coin-silver { background: radial-gradient(circle at 35% 30%, #ffffff 0%, #c0c0c0 40%, #707070 100%); }
+.coin-silver::after { content: 'S'; position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 10px; font-weight: 900; color: #404040; font-family: 'Bebas Neue', sans-serif; }
+
+/* LOADING */
+#loading-screen { display: none; flex-direction: column; z-index: 100; position: relative; overflow: hidden; background: linear-gradient(180deg, #1a1a20 0%, #0a0a0c 60%, #000 100%); }
+#loading-screen.active { display: flex; }
+.osiris-glow { position: absolute; bottom: 0; width: 100%; height: 50%; background: radial-gradient(ellipse at 50% 100%, rgba(80,80,90,0.3) 0%, transparent 60%); filter: blur(40px); }
+.osiris-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(160,160,180,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(160,160,180,0.05) 1px, transparent 1px); background-size: 60px 60px; }
+.osiris-logo-wrap { position: absolute; top: 10%; right: 8%; z-index: 5; text-align: right; pointer-events: none; }
+.osiris-studio { font-family: 'Bebas Neue', sans-serif; font-size: clamp(22px, 4vw, 38px); letter-spacing: 6px; color: #e8e8e8; }
+.osiris-emblem { width: clamp(80px, 11vw, 120px); height: clamp(80px, 11vw, 120px); margin: 8px 0 8px auto; position: relative; }
+.osiris-emblem::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #c03030 0%, #6a1010 50%, #1a0505 100%); border-radius: 50%; border: 3px solid #a01818; }
+.osiris-emblem::after { content: 'F'; position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: clamp(38px, 6vw, 60px); color: #fff; font-family: 'Bebas Neue', sans-serif; font-weight: 900; }
+.osiris-osiris { font-family: 'Bebas Neue', sans-serif; font-size: clamp(28px, 6vw, 56px); letter-spacing: 12px; color: #e8e8e8; }
+.loading-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 30px; z-index: 15; }
+.loading-bar-text { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #fff; letter-spacing: 2px; font-weight: bold; }
+.loading-bar-bg { width: 100%; height: 6px; background: rgba(0,0,0,0.6); border-radius: 3px; overflow: hidden; border: 1px solid rgba(160,160,180,0.3); }
+.loading-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4a4a55, #909098, #e8e8e8); transition: width 0.3s linear; border-radius: 3px; }
+.ver-corner { position: absolute; bottom: 55px; left: 30px; font-size: 11px; color: rgba(200,200,210,0.35); letter-spacing: 2px; font-weight: 900; z-index: 16; }
+.ver-corner2 { position: absolute; bottom: 40px; left: 30px; font-size: 10px; color: rgba(200,200,210,0.25); letter-spacing: 2px; font-weight: 700; z-index: 16; }
+
+/* PATCH */
+#patch-notes { z-index: 100001; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; padding: 20px; }
+#patch-notes.show { display: flex; }
+.patch-modal { width: 90%; max-width: 720px; max-height: 90%; background: linear-gradient(135deg, #1a1a20, #0a0a0c); border: 2px solid rgba(160,160,180,0.4); border-radius: 12px; padding: 25px 30px; position: relative; overflow-y: auto; }
+.patch-close-btn { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; color: #fff; font-size: 20px; cursor: pointer; font-family: inherit; display: none; justify-content: center; align-items: center; }
+.patch-close-btn.show { display: flex; }
+.patch-close-timer { position: absolute; top: 16px; right: 56px; font-size: 12px; color: #666; padding-top: 8px; }
+.patch-version { display: inline-block; background: linear-gradient(90deg, #4a4a55, #909098); color: #fff; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 900; margin-bottom: 12px; }
+.patch-title { font-size: 28px; font-weight: 900; color: #e8e8e8; margin-bottom: 5px; }
+.patch-date { font-size: 12px; color: #888; margin-bottom: 20px; }
+.patch-section { margin-bottom: 18px; }
+.patch-section h3 { font-size: 14px; color: #fff; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(160,160,180,0.2); }
+.patch-section ul { list-style: none; }
+.patch-section li { font-size: 13px; color: #ccc; padding: 5px 0 5px 24px; line-height: 1.5; position: relative; }
+.patch-section li::before { content: '▸'; position: absolute; left: 6px; color: #909098; font-weight: bold; }
+.patch-section li b { color: #a01818; }
+.patch-section li.fix::before { content: '✓'; color: #4ade80; }
+
+/* GAMEPLAY LOCKED */
+#gameplay-locked-modal { z-index: 99999; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; padding: 20px; }
+#gameplay-locked-modal.show { display: flex; }
+.locked-box { width: 92%; max-width: 500px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); border: 2px solid rgba(160,160,180,0.5); border-radius: 16px; padding: 32px 26px; text-align: center; }
+.locked-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 5px; color: #e8e8e8; margin-bottom: 15px; }
+.locked-text { font-size: 14px; color: #c0c0d0; line-height: 1.8; margin-bottom: 22px; }
+.locked-text b { color: #a01818; }
+.locked-btn { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 12px 40px; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
+
+/* OLD VERSIONS */
+#old-versions-modal { z-index: 99998; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; padding: 20px; }
+#old-versions-modal.show { display: flex; }
+.old-versions-box { width: 92%; max-width: 520px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); border: 2px solid rgba(160,160,180,0.4); border-radius: 16px; padding: 30px; text-align: center; }
+.old-versions-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 5px; color: #e8e8e8; margin-bottom: 15px; }
+.old-versions-text { font-size: 13px; color: #c0c0d0; line-height: 1.6; margin-bottom: 18px; }
+.old-versions-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 45vh; overflow-y: auto; }
+.old-version-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(0,0,0,0.4); border: 1px solid rgba(160,160,180,0.2); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+.old-version-item.available { border-color: rgba(200,200,210,0.5); }
+.old-version-item.available:hover { background: rgba(160,160,180,0.1); }
+.old-version-item.disabled { opacity: 0.4; cursor: not-allowed; }
+.old-version-name { font-weight: 900; font-size: 14px; letter-spacing: 1px; }
+.old-version-tag { font-size: 10px; padding: 3px 10px; border-radius: 12px; font-weight: 900; letter-spacing: 2px; }
+.old-version-tag.play { background: rgba(74,222,128,0.25); color: #4ade80; }
+.old-version-tag.dev { background: rgba(160,24,24,0.3); color: #e05050; }
+.old-versions-close { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 12px 40px; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
+
+/* AVATAR */
+#avatar-modal { z-index: 100010; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; padding: 20px; }
+#avatar-modal.show { display: flex; }
+.avatar-modal-content { width: 90%; max-width: 620px; max-height: 92%; background: linear-gradient(135deg, #1a1a20, #0a0a0c); border: 2px solid rgba(160,160,180,0.4); border-radius: 12px; padding: 22px; overflow-y: auto; position: relative; }
+.avatar-modal-title { font-size: 20px; font-weight: 900; color: #e8e8e8; margin-bottom: 15px; text-align: center; letter-spacing: 3px; }
+.avatar-modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; color: #fff; font-size: 18px; cursor: pointer; font-family: inherit; }
+.avatar-upload-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; border-radius: 10px; font-weight: 900; font-size: 14px; cursor: pointer; font-family: inherit; letter-spacing: 2px; margin-bottom: 15px; }
+.avatar-upload-icon { width: 24px; height: 24px; position: relative; }
+.avatar-upload-icon::before { content: ''; position: absolute; left: 0; bottom: 3px; width: 24px; height: 14px; background: #fff; border-radius: 2px; }
+.avatar-upload-icon::after { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 10px solid #fff; }
+.avatars-section-title { font-size: 12px; color: #707078; letter-spacing: 2px; margin: 12px 0 10px; text-align: center; }
+.avatars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
+.so2-avatar { aspect-ratio: 1; border-radius: 50%; cursor: pointer; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden; border: 3px solid transparent; }
+.so2-avatar.selected { border-color: #e8e8e8; }
+.so2-avatar.selected::after { content: '✓'; position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: #e8e8e8; color: #000; font-size: 12px; font-weight: 900; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+.so2-avatar-svg { width: 100%; height: 100%; }
+
+/* NICK */
+#nick-modal { z-index: 100011; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; padding: 20px; }
+#nick-modal.show { display: flex; }
+.nick-modal-content { width: 90%; max-width: 420px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); border: 2px solid rgba(160,160,180,0.4); border-radius: 14px; padding: 26px; text-align: center; }
+.nick-modal-title { font-size: 20px; font-weight: 900; color: #e8e8e8; margin-bottom: 18px; letter-spacing: 3px; }
+.nick-input { width: 100%; background: rgba(0,0,0,0.5); border: 2px solid rgba(160,160,180,0.4); border-radius: 10px; padding: 14px 18px; color: #fff; font-size: 16px; font-family: inherit; text-align: center; letter-spacing: 2px; margin-bottom: 15px; }
+.nick-btns { display: flex; gap: 10px; }
+.nick-btn-cancel { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px; border-radius: 8px; font-weight: 900; font-size: 13px; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
+.nick-btn-save { flex: 1; background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 900; font-size: 13px; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
+.nick-hint { font-size: 11px; color: #667; margin-top: 12px; letter-spacing: 1px; }
+
+/* SIDEBAR */
+.sidebar { width: 80px; flex-shrink: 0; background: linear-gradient(180deg, rgba(15,15,18,0.98), rgba(10,10,12,0.98)); display: flex; flex-direction: column; align-items: center; padding: 18px 0; border-right: 1px solid rgba(160,160,180,0.15); z-index: 10; }
+.sidebar-icon { width: 54px; height: 54px; display: flex; justify-content: center; align-items: center; margin-bottom: 12px; cursor: pointer; color: #6a6a75; font-size: 24px; position: relative; border-radius: 10px; }
+.sidebar-icon.active { color: #e8e8e8; background: rgba(160,160,180,0.1); }
+.sidebar-icon .dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; background: #a01818; border-radius: 50%; display: none; }
+.sidebar-icon .dot.show { display: block; }
+.sidebar-sep { width: 40px; height: 1px; background: rgba(160,160,180,0.15); margin: 8px 0; }
+.sb-home { width: 20px; height: 16px; position: relative; }
+.sb-home::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 9px solid currentColor; }
+.sb-home::after { content: ''; position: absolute; bottom: 0; left: 3px; right: 3px; height: 9px; background: currentColor; }
+.sb-inv { width: 22px; height: 15px; border: 2px solid currentColor; border-radius: 2px; position: relative; }
+.sb-inv::before { content: ''; position: absolute; top: -8px; left: 4px; width: 10px; height: 6px; border: 2px solid currentColor; border-bottom: none; border-radius: 4px 4px 0 0; }
+.sb-shield { width: 20px; height: 22px; background: currentColor; clip-path: polygon(50% 0, 100% 25%, 100% 70%, 50% 100%, 0 70%, 0 25%); }
+.sb-case { width: 22px; height: 20px; background: currentColor; border-radius: 2px; position: relative; }
+.sb-case::before { content: ''; position: absolute; top: 40%; left: 0; right: 0; height: 2px; background: rgba(0,0,0,0.5); }
+.sb-gear { width: 22px; height: 22px; position: relative; }
+.sb-gear::before { content: ''; position: absolute; inset: 0; background: currentColor; border-radius: 50%; }
+.sb-gear::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; background: #0a0a0c; border-radius: 50%; }
+.sb-coin { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff5b0, #ffd700 40%, #b8860b); position: relative; }
+.sb-coin::after { content: 'S'; position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; color: #8b6914; font-family: 'Bebas Neue', sans-serif; font-size: 14px; font-weight: 900; }
+
+.main-content { flex: 1; position: relative; display: flex; overflow: hidden; }
+
+/* FREE ROAM with FREE JOYSTICK */
+#free-roam-screen { flex-direction: column; position: relative; background: #0a0a0c; overflow: hidden; }
+#free-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.fr-hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.fr-back-btn { position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.85); border: 2px solid rgba(160,160,180,0.5); color: #e8e8e8; padding: 10px 18px; border-radius: 8px; font-weight: 900; font-size: 14px; cursor: pointer; font-family: inherit; pointer-events: auto; }
+.fr-controls-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 8px 20px; border-radius: 8px; font-size: 12px; color: #c0c0d0; letter-spacing: 1px; }
+/* Free-floating joystick zone (left half of screen) */
+.fr-joy-zone { position: absolute; top: 0; left: 0; width: 50%; height: 100%; pointer-events: auto; touch-action: none; z-index: 18; }
+.fr-joy-visual { position: absolute; width: 140px; height: 140px; border-radius: 50%; background: rgba(0,0,0,0.4); border: 2px solid rgba(160,160,180,0.35); pointer-events: none; z-index: 20; display: none; transform: translate(-50%, -50%); }
+.fr-joy-visual.show { display: block; }
+.fr-joy-visual-knob { position: absolute; top: 29%; left: 29%; width: 42%; height: 42%; border-radius: 50%; background: rgba(200,200,210,0.7); box-shadow: 0 0 15px rgba(200,200,210,0.9); }
+.fr-look-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; touch-action: none; z-index: 15; }
+.fr-crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; }
+.fr-crosshair::before, .fr-crosshair::after { content: ''; position: absolute; background: rgba(200,200,210,0.7); }
+.fr-crosshair::before { left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); }
+.fr-crosshair::after { top: 50%; left: 0; right: 0; height: 2px; transform: translateY(-50%); }
+.fr-noshoot-badge { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, rgba(80,80,90,0.95), rgba(60,60,70,0.95)); color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 2px; }
+
+/* MAIN MENU */
+#main-menu { position: relative; background: linear-gradient(135deg, #0a0a0c 0%, #1a1a20 40%, #0a0a0c 100%); overflow: hidden; }
+.menu-bg-gradient { position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 30%, rgba(80,80,90,0.15) 0%, transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(50,50,60,0.3) 0%, transparent 60%); }
+.menu-bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(160,160,180,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(160,160,180,0.04) 1px, transparent 1px); background-size: 55px 55px; }
+.menu-top-bar { position: absolute; top: 0; left: 0; right: 0; height: 60px; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; background: linear-gradient(180deg, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0.5) 70%, transparent 100%); pointer-events: none; }
+.menu-top-left { display: flex; align-items: center; gap: 12px; pointer-events: auto; }
+.menu-logo-mini { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: #e8e8e8; }
+.menu-logo-mini .chillow { color: #a01818; }
+.menu-season { font-size: 10px; color: #707078; letter-spacing: 3px; padding: 3px 10px; border: 1px solid rgba(160,160,180,0.25); border-radius: 12px; }
+.menu-top-right { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+/* Update badge in top-right */
+.menu-update-badge { position: relative; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #4a4a55, #707078); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 2px; border: none; cursor: pointer; font-family: inherit; box-shadow: 0 0 20px rgba(200,200,210,0.3); }
+.menu-update-badge .update-dot { width: 8px; height: 8px; background: #ff3030; border-radius: 50%; animation: updatePulse 1.5s infinite; }
+@keyframes updatePulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+.menu-right-big { position: absolute; right: 5%; bottom: 8%; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.menu-play-btn { background: linear-gradient(135deg, #d0d0d8 0%, #909098 100%); color: #0a0a0c; font-size: 26px; font-weight: 900; padding: 22px 60px; border: none; border-radius: 8px; cursor: pointer; letter-spacing: 4px; font-family: 'Bebas Neue', sans-serif; position: relative; box-shadow: 0 0 30px rgba(200,200,210,0.3); }
+.menu-play-btn::before { content: ''; position: absolute; left: 24px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 13px solid #0a0a0c; }
+.menu-modes-btn { background: rgba(10,10,12,0.9); color: #d0d0d8; font-size: 14px; font-weight: 900; padding: 12px 40px; border: 2px solid rgba(160,160,180,0.35); border-radius: 8px; cursor: pointer; letter-spacing: 3px; font-family: inherit; }
+.menu-oldversions-btn { background: rgba(10,10,12,0.9); color: #a01818; font-size: 12px; font-weight: 900; padding: 10px 30px; border: 2px solid rgba(160,24,24,0.5); border-radius: 8px; cursor: pointer; letter-spacing: 2px; font-family: inherit; display: flex; align-items: center; gap: 8px; }
+.menu-oldversions-btn::before { content: '↶'; font-size: 16px; }
+.menu-left-profile { position: absolute; left: 5%; bottom: 8%; z-index: 5; display: flex; align-items: center; gap: 15px; background: rgba(10,10,12,0.85); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(160,160,180,0.25); cursor: pointer; }
+.menu-avatar-big { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #d0d0d8; overflow: hidden; position: relative; background: #1a1a20; flex-shrink: 0; }
+.menu-avatar-big img, .menu-avatar-big svg { width: 100%; height: 100%; display: block; }
+.menu-profile-nick-row { display: flex; align-items: center; gap: 8px; }
+.menu-profile-nick { font-size: 17px; font-weight: 900; letter-spacing: 1px; }
+.menu-edit-icon { width: 16px; height: 16px; opacity: 0.7; position: relative; cursor: pointer; }
+.menu-edit-icon::before { content: '✎'; position: absolute; inset: 0; color: #d0d0d8; font-size: 14px; font-weight: 900; display: flex; justify-content: center; align-items: center; }
+.menu-profile-level { font-size: 11px; color: #707078; letter-spacing: 2px; margin-top: 2px; }
+.menu-profile-xp { width: 130px; height: 5px; background: rgba(0,0,0,0.5); border-radius: 3px; margin-top: 6px; overflow: hidden; border: 1px solid rgba(160,160,180,0.15); }
+.menu-profile-xp-fill { width: 15%; height: 100%; background: linear-gradient(90deg, #707078, #d0d0d8); }
+.menu-slogan { position: absolute; bottom: 30%; right: 5%; z-index: 4; text-align: right; pointer-events: none; }
+.menu-slogan-title { font-family: 'UnifrakturCook', serif; font-size: clamp(36px, 6vw, 64px); letter-spacing: 4px; color: #e8e8e8; text-shadow: 2px 2px 0 #1a1a20, 0 0 30px rgba(160,24,24,0.4); font-weight: 700; }
+.menu-slogan-sub { font-size: 11px; color: #707078; letter-spacing: 4px; margin-top: 3px; font-family: 'Bebas Neue', sans-serif; }
+.menu-version { position: absolute; top: 70px; right: 12px; z-index: 5; font-size: 10px; color: rgba(200,200,210,0.5); letter-spacing: 2px; font-weight: 900; }
+
+/* Screens */
+#game-mode-screen { flex-direction: column; padding: 20px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); overflow-y: auto; position: relative; }
+.gms-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(160,160,180,0.2); padding-right: 130px; }
+.gms-title { font-size: 22px; font-weight: 900; color: #e8e8e8; letter-spacing: 4px; }
+.gms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; padding: 10px 0; }
+.gms-card { background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 2px solid rgba(160,160,180,0.2); border-radius: 12px; padding: 20px; position: relative; cursor: pointer; display: flex; flex-direction: column; min-height: 190px; }
+.gms-card.open { border-color: rgba(200,200,210,0.5); }
+.gms-card.open::after { content: '▶'; position: absolute; top: 15px; right: 15px; font-size: 22px; color: #d0d0d8; }
+.gms-card-icon { font-size: 52px; margin-bottom: 10px; }
+.gms-card-name { font-size: 20px; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; color: #fff; }
+.gms-card-desc { font-size: 11px; color: #707078; line-height: 1.4; margin-bottom: 12px; flex: 1; }
+.gms-card-status { position: absolute; bottom: 14px; right: 14px; font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 12px; }
+.gms-card-status.open { background: rgba(74,222,128,0.2); color: #4ade80; }
+.gms-card-status.locked { background: rgba(160,24,24,0.25); color: #e05050; }
+
+#cases-screen { flex-direction: column; padding: 20px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); overflow-y: auto; position: relative; }
+.cases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; padding: 15px 0; }
+.case-card { background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 2px solid rgba(160,160,180,0.3); border-radius: 14px; padding: 25px 20px; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.case-box-css { width: 100px; height: 90px; position: relative; margin-bottom: 15px; }
+.case-box-css::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 40%; background: linear-gradient(180deg, #4a4a55, #2a2a30); border-radius: 6px 6px 0 0; border: 2px solid #0a0a0f; }
+.case-box-css::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 65%; background: linear-gradient(180deg, #3a3a45, #1a1a20); border-radius: 4px; border: 2px solid #0a0a0f; }
+.case-box-css .lock { position: absolute; top: 35%; left: 50%; transform: translateX(-50%); width: 24px; height: 20px; background: #d0d0d8; border-radius: 3px; z-index: 3; }
+.case-card .case-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; color: #e8e8e8; margin-bottom: 6px; }
+.case-card .case-price { font-size: 16px; font-weight: 900; color: #c0c0c0; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.case-card .case-desc { font-size: 11px; color: #707078; text-align: center; margin-bottom: 15px; line-height: 1.4; }
+.case-buy-btn { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 900; font-size: 13px; cursor: pointer; font-family: inherit; letter-spacing: 2px; width: 100%; }
+
+#case-open-modal { z-index: 100030; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; padding: 20px; flex-direction: column; }
+#case-open-modal.show { display: flex; }
+.case-reel-wrap { width: 90%; max-width: 700px; height: 180px; background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 3px solid rgba(160,160,180,0.4); border-radius: 14px; overflow: hidden; position: relative; }
+.case-reel { display: flex; height: 100%; position: absolute; top: 0; left: 0; }
+.case-reel-item { width: 140px; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.1); }
+.case-reel-item .ic { font-size: 55px; }
+.case-reel-item .nm { font-size: 10px; color: #ccc; text-align: center; margin-top: 6px; padding: 0 4px; }
+.case-pointer { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: linear-gradient(180deg, #d0d0d8, #fff, #d0d0d8); transform: translateX(-50%); z-index: 5; }
+.case-pointer::before, .case-pointer::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border-left: 10px solid transparent; border-right: 10px solid transparent; }
+.case-pointer::before { top: -12px; border-top: 12px solid #d0d0d8; }
+.case-pointer::after { bottom: -12px; border-bottom: 12px solid #d0d0d8; }
+.case-win-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 5px; color: #e8e8e8; margin: 22px 0 10px; opacity: 0; transition: opacity 0.5s; }
+.case-win-title.show { opacity: 1; }
+.case-win-item { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 22px; opacity: 0; transition: opacity 0.5s; }
+.case-win-item.show { opacity: 1; }
+.case-close-btn { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 12px 40px; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; font-family: inherit; letter-spacing: 2px; }
+
+#mail-screen { flex-direction: column; padding: 20px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); overflow-y: auto; position: relative; }
+.mail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(160,160,180,0.2); padding-right: 130px; }
+.mail-title { font-size: 22px; font-weight: 900; color: #e8e8e8; letter-spacing: 4px; }
+.mail-list { display: flex; flex-direction: column; gap: 12px; }
+.mail-item { background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 1px solid rgba(160,160,180,0.15); border-radius: 10px; padding: 15px 20px; cursor: pointer; position: relative; }
+.mail-item.unread { border-color: rgba(200,200,210,0.5); }
+.mail-item.unread::before { content: '●'; position: absolute; top: 15px; right: 15px; color: #d0d0d8; font-size: 14px; }
+.mail-item-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.mail-item-title { font-size: 14px; font-weight: 900; }
+.mail-item.unread .mail-item-title { color: #d0d0d8; }
+.mail-item-date { font-size: 11px; color: #666; }
+.mail-item-from { font-size: 11px; color: #909098; margin-bottom: 6px; }
+.mail-item-preview { font-size: 12px; color: #909098; line-height: 1.4; }
+.mail-view-modal { z-index: 100020; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; padding: 20px; }
+.mail-view-modal.show { display: flex; }
+.mail-view-content { width: 90%; max-width: 600px; max-height: 85%; background: linear-gradient(135deg, #1a1a20, #0a0a0c); border: 2px solid rgba(160,160,180,0.4); border-radius: 12px; padding: 25px; overflow-y: auto; position: relative; }
+.mail-view-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; color: #fff; font-size: 20px; cursor: pointer; font-family: inherit; }
+.mail-view-title { font-size: 20px; font-weight: 900; color: #e8e8e8; margin-bottom: 6px; }
+.mail-view-date { font-size: 11px; color: #666; margin-bottom: 15px; }
+.mail-view-body { font-size: 13px; color: #ddd; line-height: 1.7; white-space: pre-wrap; }
+
+#stats-screen { flex-direction: row; background: linear-gradient(135deg, #1a1a20, #0a0a0c); padding: 20px; }
+.stats-container { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; justify-content: center; }
+.history-btn { background: rgba(160,160,180,0.15); border: 1px solid rgba(160,160,180,0.35); color: #fff; padding: 10px 30px; border-radius: 5px; font-family: inherit; font-weight: bold; cursor: pointer; }
+.kd-circle { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, #2a2a30 0%, #0a0a0c 100%); border: 4px solid #d0d0d8; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.kd-circle .kd-value { font-size: 46px; font-weight: 900; }
+.kd-circle .kd-label { font-size: 13px; color: #d0d0d8; font-weight: bold; }
+
+#settings-screen { flex-direction: column; padding: 20px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); overflow-y: auto; position: relative; }
+.settings-header { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid rgba(160,160,180,0.15); padding-bottom: 10px; flex-wrap: wrap; }
+.settings-tab { color: #707078; font-size: 14px; font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 5px; position: relative; }
+.settings-tab.active { color: #fff; background: rgba(160,160,180,0.2); border-bottom: 2px solid #d0d0d8; }
+.settings-tab .tab-dot { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #a01818; border-radius: 50%; display: none; }
+.settings-tab .tab-dot.show { display: block; }
+.settings-content { display: none; width: 100%; }
+.settings-content.active { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.settings-item { background: rgba(160,160,180,0.06); border: 1px solid rgba(160,160,180,0.15); border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.settings-item span { font-size: 14px; flex-shrink: 0; }
+.settings-range { flex: 1; max-width: 120px; accent-color: #d0d0d8; }
+.toggle-switch { width: 50px; height: 26px; background: rgba(255,255,255,0.15); border-radius: 13px; position: relative; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
+.toggle-switch::before { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #888; transition: 0.3s; }
+.toggle-switch.active { background: rgba(200,200,210,0.3); border-color: #d0d0d8; }
+.toggle-switch.active::before { left: 26px; background: #d0d0d8; }
+.settings-content.about-content.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+.settings-content.about-content { display: none; }
+.about-version { font-family: 'Bebas Neue', sans-serif; font-size: 60px; font-weight: 900; color: #e8e8e8; letter-spacing: 6px; margin-bottom: 8px; }
+.about-name { font-size: 18px; color: #fff; letter-spacing: 4px; font-weight: 900; }
+.about-sub { font-size: 12px; color: #707078; letter-spacing: 3px; margin-bottom: 22px; }
+.about-badge { display: inline-block; background: linear-gradient(90deg, #4a4a55, #909098); color: #fff; padding: 6px 20px; border-radius: 20px; font-weight: 900; font-size: 13px; margin-bottom: 22px; }
+.about-info { font-size: 13px; color: #c0c0d0; text-align: center; line-height: 1.7; max-width: 400px; }
+.about-info b { color: #a01818; }
+
+#inventory-screen { flex-direction: column; padding: 20px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); overflow-y: auto; position: relative; }
+.top-tabs { display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid rgba(160,160,180,0.15); padding-bottom: 10px; padding-right: 130px; flex-wrap: wrap; }
+.top-tab { color: #707078; font-size: 15px; font-weight: bold; cursor: pointer; padding-bottom: 5px; position: relative; }
+.top-tab.active { color: #fff; border-bottom: 2px solid #d0d0d8; }
+.top-tab.market-tab { color: #909098; }
+.top-tab.market-tab.active { color: #909098; border-bottom-color: #909098; }
+.tab-panel { display: none; width: 100%; }
+.tab-panel.active-tab { display: block; }
+.inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.item-card { background: rgba(0,0,0,0.4); border: 2px solid rgba(160,160,180,0.12); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; }
+.item-card.equipped { border-color: #d0d0d8; background: rgba(160,160,180,0.1); }
+.item-card.equipped::before { content: '✓'; position: absolute; top: 5px; right: 5px; background: #d0d0d8; color: #000; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 900; display: flex; justify-content: center; align-items: center; }
+.item-image { width: 100%; height: 60px; background: rgba(255,255,255,0.03); border-radius: 4px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; font-size: 30px; }
+.item-name { font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+.item-rarity { font-size: 9px; padding: 2px 6px; border-radius: 3px; margin-top: 5px; width: 100%; text-align: center; font-weight: bold; }
+.rarity-red { background: #cc0000; } .rarity-purple { background: #800080; } .rarity-blue { background: #0066cc; } .rarity-gold { background: #ffd700; color: #000; } .rarity-fire { background: linear-gradient(90deg, #6a1010, #a01818); color: #fff; }
+.market-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(160,160,180,0.06); border: 1px solid rgba(160,160,180,0.25); border-radius: 8px; padding: 10px 15px; }
+.market-info { font-size: 12px; color: #707078; }
+.market-refresh-btn { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; font-family: inherit; }
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.market-lot { background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 1px solid rgba(160,160,180,0.2); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; position: relative; }
+.market-lot .seller { position: absolute; top: 5px; left: 5px; font-size: 9px; color: #666; }
+.market-buy-btn { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 8px 16px; border-radius: 5px; font-weight: 900; font-size: 11px; cursor: pointer; margin-top: 8px; width: 100%; font-family: inherit; }
+.market-buy-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+#earn-screen { flex-direction: column; padding: 15px 20px; background: linear-gradient(135deg, #1a1a20, #0a0a0c); overflow: hidden; position: relative; }
+.earn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(160,160,180,0.15); }
+.earn-title { font-size: 17px; font-weight: 900; color: #d0d0d8; letter-spacing: 3px; }
+.earn-tabs { display: flex; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(160,160,180,0.15); flex-wrap: wrap; }
+.earn-tab { padding: 8px 20px; background: rgba(160,160,180,0.08); border: 1px solid rgba(160,160,180,0.2); color: #707078; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.earn-tab.active { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border-color: #909098; }
+.earn-content { flex: 1; overflow-y: auto; display: none; }
+.earn-content.active-content { display: block; }
+.tap-game { display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 20px; }
+.tap-big-circle { width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff5b0, #ffd700 40%, #b8860b 100%); display: flex; justify-content: center; align-items: center; cursor: pointer; }
+.tap-big-circle::after { content: 'S'; font-family: 'Bebas Neue', sans-serif; font-size: 80px; font-weight: 900; color: #8b6914; }
+.tap-info { text-align: center; font-size: 13px; color: #707078; line-height: 1.6; }
+.tap-info b { color: #d0d0d8; }
+.floating-gold { position: absolute; pointer-events: none; font-weight: 900; font-size: 22px; color: #ffd700; animation: floatUp 1s ease-out forwards; z-index: 1000; }
+@keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-80px); opacity: 0; } }
+.donate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; padding: 10px 0; }
+.donate-card { background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 2px solid rgba(160,160,180,0.3); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+.donate-card .price-tag { font-family: 'Bebas Neue', sans-serif; font-size: 40px; font-weight: 900; color: #909098; letter-spacing: 2px; }
+.donate-card .gold-amount { font-size: 24px; font-weight: 900; color: #ffd700; margin: 8px 0; display: flex; align-items: center; gap: 8px; }
+.donate-card .dev-badge { background: linear-gradient(90deg, #6a6a75, #909098); color: #fff; font-size: 10px; font-weight: 900; padding: 4px 12px; border-radius: 20px; letter-spacing: 2px; margin-top: 10px; }
+.donate-card .buy-gold-btn { background: #333; color: #888; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 900; font-size: 13px; cursor: not-allowed; margin-top: 12px; width: 100%; font-family: inherit; letter-spacing: 2px; }
+
+#shield-screen { flex-direction: column; background: linear-gradient(135deg, #1a1a20, #0a0a0c); padding: 20px; position: relative; }
+.clan-create-lobby-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 15px 50px; border-radius: 10px; font-weight: 900; font-size: 17px; cursor: pointer; font-family: inherit; letter-spacing: 3px; }
+#clan-lobby-screen { z-index: 100; background: linear-gradient(135deg, #1a1a20, #0a0a0c); flex-direction: column; padding: 20px; position: relative; }
+.clan-lobby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(160,160,180,0.2); padding-right: 130px; }
+.clan-lobby-title { font-size: 22px; font-weight: 900; color: #e8e8e8; letter-spacing: 4px; }
+.clan-lobby-content { flex: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+.clan-room-card { background: linear-gradient(135deg, rgba(40,40,48,0.9), rgba(15,15,18,0.9)); border: 2px solid rgba(160,160,180,0.3); border-radius: 12px; padding: 20px; }
+.clan-room-name { font-size: 20px; font-weight: 900; color: #d0d0d8; margin-bottom: 10px; letter-spacing: 2px; }
+.clan-room-code { font-family: 'Courier New', monospace; font-size: 15px; color: #909098; background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 6px; display: inline-block; letter-spacing: 3px; margin-bottom: 15px; }
+.clan-players-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.clan-player { display: flex; align-items: center; gap: 12px; padding: 10px 15px; background: rgba(160,160,180,0.1); border-radius: 8px; border: 1px solid rgba(160,160,180,0.25); }
+.clan-player.you { border-color: #909098; background: rgba(200,200,210,0.08); }
+.clan-player .player-avatar { font-size: 26px; }
+.clan-player .player-name { font-weight: 900; flex: 1; font-size: 14px; }
+.clan-player .player-tag { font-size: 10px; color: #909098; background: rgba(200,200,210,0.15); padding: 3px 10px; border-radius: 12px; font-weight: 900; }
+.clan-exit-btn { background: linear-gradient(90deg, #4a4a55, #707078); color: #fff; border: none; padding: 14px 40px; font-size: 15px; font-weight: 900; border-radius: 8px; cursor: pointer; letter-spacing: 3px; font-family: inherit; margin-top: 15px; }
+
+/* SYNDICATE MODE (old v0.20.0) — red theme applied via body class */
+body.syndicate-mode { background: #1a0505; }
+body.syndicate-mode #main-menu { background: linear-gradient(135deg, #2a0808 0%, #0d0505 40%, #1a0808 70%, #2a0808 100%); }
+body.syndicate-mode .menu-bg-gradient { background: radial-gradient(ellipse at 70% 30%, rgba(200,60,60,0.2) 0%, transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(140,30,30,0.35) 0%, transparent 60%); }
+body.syndicate-mode .menu-logo-mini .chillow { color: #c02020; }
+body.syndicate-mode .menu-play-btn { background: linear-gradient(135deg, #e05050 0%, #8a1010 100%); color: #fff; }
+body.syndicate-mode .menu-play-btn::before { border-left-color: #fff; }
+body.syndicate-mode .menu-modes-btn { color: #e05050; border-color: rgba(200,60,60,0.4); }
+body.syndicate-mode .menu-oldversions-btn { color: #d0d0d8; border-color: rgba(160,160,180,0.4); }
+body.syndicate-mode .menu-slogan-title { text-shadow: 2px 2px 0 #2a0808, 0 0 30px rgba(200,60,60,0.5); }
+body.syndicate-mode .menu-top-bar { background: linear-gradient(180deg, rgba(20,5,5,0.95) 0%, rgba(20,5,5,0.5) 70%, transparent 100%); }
+body.syndicate-mode .menu-season { color: #996666; border-color: rgba(200,60,60,0.3); }
+body.syndicate-mode .menu-left-profile { background: rgba(20,5,5,0.85); border-color: rgba(200,60,60,0.3); }
+body.syndicate-mode .menu-avatar-big { border-color: #e05050; }
+body.syndicate-mode .menu-update-badge { background: linear-gradient(135deg, #8a1010, #c02020); }
+body.syndicate-mode .menu-bg-grid { background-image: linear-gradient(rgba(200,60,60,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(200,60,60,0.04) 1px, transparent 1px); }
+</style>
+</head>
+<body>
+
+<div id="rotator">
+    <div id="rise-splash">
+        <div class="rise-text">RISE GAMING</div>
+        <div class="unity-badge">
+            <div class="unity-made-by">MADE<br>WITH</div>
+            <div class="unity-logo-box"><div class="inner"></div></div>
+            <div class="unity-name">Unity</div>
+        </div>
+    </div>
+
+    <div id="fireborn-loading">
+        <div class="fb-bg-blur"></div>
+        <div class="fb-city-bg"></div>
+        <div class="fb-logo-wrap">
+            <div class="fb-studio-line">STAN<span class="accent">CHILLOW</span> REWORK</div>
+            <div class="fb-dragon-emblem">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#f0f0f0"/>
+                            <stop offset="0.5" stop-color="#c8c8d0"/>
+                            <stop offset="1" stop-color="#6a6a75"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M100,20 C85,40 70,45 60,60 C50,75 55,95 70,105 C75,108 82,108 88,105 C82,110 75,112 68,110 C60,108 55,100 58,90 C60,82 68,78 76,80 C82,82 85,88 82,94 C80,98 75,100 70,98 C65,96 63,90 66,86 C70,82 76,84 78,88 C80,92 78,96 74,98 C72,98 70,96 70,94 C70,92 72,90 74,90 C74,90 76,92 76,94 C75,96 73,96 72,94 C72,93 73,92 74,92 C74,94 74,94 74,94 C73,92 76,90 76,92 C75,94 73,92 73,90 C75,88 78,90 78,94 C78,98 74,102 68,102 C62,100 58,94 58,86 C60,76 70,70 82,72 C78,66 72,62 65,60 C55,58 45,65 42,78 C40,88 44,98 52,105 C60,112 72,115 85,113 C78,120 68,122 58,118 C50,115 44,108 42,100 C40,112 46,125 58,132 C70,138 85,138 98,132 C92,138 84,142 75,142 C82,148 92,150 102,148 C96,155 88,158 78,155 C90,165 108,165 120,158 C112,162 104,162 95,158 C105,168 122,170 138,162 C128,170 118,175 105,175 C120,182 140,180 155,168 C148,170 142,168 138,164 C145,170 148,178 145,185 C155,175 162,160 160,142 C162,155 168,165 178,172 C172,160 172,148 168,135 C175,140 180,135 180,128 C180,120 175,115 168,115 C172,108 172,100 165,94 C168,90 168,84 162,80 C165,75 165,68 158,62 C160,55 158,48 150,45 C152,40 150,32 142,30 C145,24 142,18 135,16 C130,14 125,15 120,20 C115,18 108,18 100,20 Z" fill="url(#flameGrad)" stroke="#1a1a20" stroke-width="1"/>
+                    <ellipse cx="100" cy="75" rx="18" ry="12" fill="#1a1a20"/>
+                    <circle cx="95" cy="73" r="2.5" fill="#a01818"/>
+                    <circle cx="105" cy="73" r="2.5" fill="#a01818"/>
+                </svg>
+            </div>
+            <div class="fb-event-title">Fireborn</div>
+        </div>
+        <div class="fb-soldier">
+            <div class="fb-s-head">
+                <div class="fb-s-helmet"></div>
+                <div class="fb-s-goggles"></div>
+                <div class="fb-s-mask"></div>
+            </div>
+            <div class="fb-s-body"><div class="fb-s-vest"><div class="fb-s-pocket"></div></div></div>
+            <div class="fb-s-armL"></div>
+            <div class="fb-s-armR"></div>
+            <div class="fb-rifle-main"></div>
+            <div class="fb-rifle-mag"></div>
+            <div class="fb-rifle-stock"></div>
+        </div>
+        <div class="fb-load-bottom">
+            <div class="fb-circle-loader"></div>
+            <div class="fb-load-text" id="fb-load-text">Загрузка...</div>
+        </div>
+        <div class="fb-version-corner">v0.24.0</div>
+    </div>
+
+    <div id="login-screen">
+        <div class="login-bg-grid"></div>
+        <div class="login-content">
+            <div class="login-logo">STANCHILLOW</div>
+            <div class="login-sub">FIREBORN</div>
+            <div class="login-title">ВХОД В ИГРУ</div>
+            <div class="login-desc">Выбери способ входа</div>
+            <button class="login-btn google" onclick="loginGoogle()">
+                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4" d="M43.6 20.5H42V20.5H24v7h11.3c-1.6 4.5-5.9 7.5-11.3 7.5-6.9 0-12.5-5.6-12.5-12.5S17.1 10 24 10c3.2 0 6.1 1.2 8.3 3.2l4.9-4.9C34 5.1 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c11.6 0 21-9.4 21-21 0-1.2-.1-2.4-.4-3.5z"/>
+                    <path fill="#34A853" d="M6.3 14.7l5.7 4.2C13.7 15.1 18.4 12 24 12c3.2 0 6.1 1.2 8.3 3.2l4.9-4.9C34 7.1 29.3 5 24 5 16.3 5 9.7 9.3 6.3 14.7z"/>
+                    <path fill="#FBBC05" d="M24 43c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.3 0-9.8-3.4-11.4-8.1l-5.9 4.6C9.9 38 16.4 43 24 43z"/>
+                    <path fill="#EA4335" d="M43.6 20.5H42V20.5H24v7h11.3c-.8 2.2-2.2 4-4 5.3l6.2 5.2c-.4.4 6.5-4.7 6.5-14 0-1.2-.1-2.4-.4-3.5z"/>
+                </svg>
+                <span>ВОЙТИ ЧЕРЕЗ GOOGLE</span>
+            </button>
+            <div class="login-or">— ИЛИ —</div>
+            <button class="login-btn guest" disabled>
+                <span>ИГРАТЬ КАК ГОСТЬ</span>
+            </button>
+            <div class="login-terms">Продолжая, ты соглашаешься с<br><a>Условиями</a> и <a>Политикой</a></div>
+        </div>
+    </div>
+
+    <div class="currency-wrap">
+        <div class="gold-display" id="gold-display"><span class="coin-icon coin-gold"></span><span id="gold-top">0</span></div>
+        <div class="silver-display" id="silver-display"><span class="coin-icon coin-silver"></span><span id="silver-top">0</span></div>
+    </div>
+    <div id="fps-display">FPS: <span class="val" id="fps-value">60</span></div>
+
+    <div id="patch-notes">
+        <div class="patch-modal">
+            <button class="patch-close-btn" id="patch-close" onclick="closePatchNotes()">✕</button>
+            <div class="patch-close-timer" id="patch-timer">Закрыть через 3с</div>
+            <div id="patch-content"></div>
+        </div>
+    </div>
+
+    <div id="gameplay-locked-modal">
+        <div class="locked-box">
+            <div class="locked-title">ГЕЙМПЛЕЙ ЗАКРЫТ</div>
+            <div class="locked-text">Доступен только <b>Свободный режим</b>.</div>
+            <button class="locked-btn" onclick="closeGameplayLocked()">← ПОНЯТНО</button>
+        </div>
+    </div>
+
+    <div id="old-versions-modal">
+        <div class="old-versions-box">
+            <div class="old-versions-title">СТАРЫЕ ВЕРСИИ</div>
+            <div class="old-versions-text">Выбери версию для возврата в прошлое.</div>
+            <div class="old-versions-list">
+                <div class="old-version-item available" onclick="playOldVersion('0.20.0')">
+                    <div class="old-version-name">v0.20.0 SYNDICATE</div>
+                    <div class="old-version-tag play">ИГРАТЬ</div>
+                </div>
+                <div class="old-version-item disabled">
+                    <div class="old-version-name">v0.21.0 OSIRIS</div>
+                    <div class="old-version-tag dev">В РАЗРАБОТКЕ</div>
+                </div>
+                <div class="old-version-item disabled">
+                    <div class="old-version-name">v1.23.9 FIREBORN</div>
+                    <div class="old-version-tag dev">В РАЗРАБОТКЕ</div>
+                </div>
+            </div>
+            <button class="old-versions-close" onclick="closeOldVersions()">← ПОНЯТНО</button>
+        </div>
+    </div>
+
+    <div id="avatar-modal">
+        <div class="avatar-modal-content">
+            <button class="avatar-modal-close" onclick="closeAvatarModal()">✕</button>
+            <div class="avatar-modal-title">ВЫБЕРИ АВАТАРКУ</div>
+            <button class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">
+                <span class="avatar-upload-icon"></span>
+                <span>ЗАГРУЗИТЬ ИЗ ГАЛЕРЕИ</span>
+            </button>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+            <div class="avatars-section-title">ИЛИ ВЫБЕРИ ГОТОВУЮ</div>
+            <div class="avatars-grid" id="avatars-grid-modal"></div>
+        </div>
+    </div>
+
+    <div id="nick-modal">
+        <div class="nick-modal-content">
+            <div class="nick-modal-title">СМЕНИТЬ НИК</div>
+            <input type="text" id="nick-input" class="nick-input" placeholder="ВВЕДИ НИК" maxlength="16">
+            <div class="nick-btns">
+                <button class="nick-btn-cancel" onclick="closeNickModal()">ОТМЕНА</button>
+                <button class="nick-btn-save" onclick="saveNick()">СОХРАНИТЬ</button>
+            </div>
+            <div class="nick-hint">От 3 до 16 символов</div>
+        </div>
+    </div>
+
+    <div id="app">
+        <div class="sidebar" id="sidebar" style="display: none;">
+            <div class="sidebar-icon active" onclick="switchScreen('main-menu', this)"><span class="sb-home"></span></div>
+            <div class="sidebar-icon" onclick="switchScreen('stats-screen', this)"><span class="sb-inv"></span></div>
+            <div class="sidebar-icon" onclick="switchScreen('inventory-screen', this)"><span class="sb-inv"></span></div>
+            <div class="sidebar-sep"></div>
+            <div class="sidebar-icon" onclick="switchScreen('shield-screen', this)"><span class="sb-shield"></span></div>
+            <div class="sidebar-icon" onclick="switchScreen('cases-screen', this)"><span class="sb-case"></span></div>
+            <div class="sidebar-sep"></div>
+            <div class="sidebar-icon" onclick="switchScreen('settings-screen', this)"><span class="sb-gear"></span><span class="dot" id="settings-dot"></span></div>
+            <div class="sidebar-icon" style="margin-top: auto;" onclick="switchScreen('earn-screen', this)"><span class="sb-coin"></span></div>
+        </div>
+
+        <div class="main-content">
+            <div id="free-roam-screen" class="screen">
+                <canvas id="free-canvas"></canvas>
+                <div class="fr-hud">
+                    <div class="fr-noshoot-badge">СТРЕЛЬБА ЗАПРЕЩЕНА</div>
+                    <div class="fr-crosshair"></div>
+                    <div class="fr-controls-hint">Джойстик свободный · Обзор справа · Пасхалка на стене</div>
+                </div>
+                <div class="fr-joy-zone" id="fr-joy-zone"></div>
+                <div class="fr-joy-visual" id="fr-joy-visual">
+                    <div class="fr-joy-visual-knob" id="fr-knob"></div>
+                </div>
+                <div class="fr-look-zone" id="fr-look-zone"></div>
+                <button class="fr-back-btn" onclick="stopFreeRoam()">✕ ВЫЙТИ</button>
+            </div>
+
+            <div id="loading-screen" class="screen">
+                <div class="osiris-glow"></div>
+                <div class="osiris-grid"></div>
+                <div class="osiris-logo-wrap">
+                    <div class="osiris-studio">STANCHILLOW</div>
+                    <div class="osiris-emblem"></div>
+                    <div class="osiris-osiris" id="loading-title">FIREBORN</div>
+                </div>
+                <div class="loading-bottom">
+                    <div class="loading-bar-text"><span id="loading-status">Загрузка</span><span id="loading-percent">0%</span></div>
+                    <div class="loading-bar-bg"><div class="loading-bar-fill" id="loading-fill"></div></div>
+                </div>
+                <div class="ver-corner">VERSION 0.24.0</div>
+                <div class="ver-corner2" id="loading-subtitle">FIREBORN REWORK</div>
+            </div>
+
+            <div id="main-menu" class="screen">
+                <div class="menu-bg-gradient"></div>
+                <div class="menu-bg-grid"></div>
+                <div class="menu-top-bar">
+                    <div class="menu-top-left">
+                        <span class="menu-logo-mini">STAN<span class="chillow">CHILLOW</span></span>
+                        <span class="menu-season" id="menu-season-text">FIREBORN · v0.24.0</span>
+                    </div>
+                    <div class="menu-top-right">
+                        <button class="menu-update-badge" onclick="showUpdatePanel()">
+                            <span class="update-dot"></span>
+                            ЧТО НОВОГО
+                        </button>
+                    </div>
+                </div>
+                <div class="menu-version" id="menu-version-text">v0.24.0</div>
+                <div class="menu-slogan">
+                    <div class="menu-slogan-title" id="menu-slogan-title">Fireborn</div>
+                    <div class="menu-slogan-sub" id="menu-slogan-sub">REWORK · 0.24.0</div>
+                </div>
+                <div class="menu-left-profile">
+                    <div class="menu-avatar-big" id="main-avatar-big" onclick="openAvatarModal()"></div>
+                    <div class="menu-profile-info">
+                        <div class="menu-profile-nick-row">
+                            <div class="menu-profile-nick" id="menu-nick">ID Offline</div>
+                            <div class="menu-edit-icon" onclick="openNickModal()"></div>
+                        </div>
+                        <div class="menu-profile-level">УРОВЕНЬ 1 · 0/360 XP</div>
+                        <div class="menu-profile-xp"><div class="menu-profile-xp-fill"></div></div>
+                    </div>
+                </div>
+                <div class="menu-right-big">
+                    <button class="menu-play-btn" onclick="switchScreen('game-mode-screen', null)">ИГРАТЬ</button>
+                    <button class="menu-modes-btn" onclick="switchScreen('game-mode-screen', null)">РЕЖИМЫ</button>
+                    <button class="menu-oldversions-btn" onclick="openOldVersions()">СТАРЫЕ ВЕРСИИ</button>
+                </div>
+            </div>
+
+            <div id="game-mode-screen" class="screen">
+                <button class="btn-back btn-back-corner" onclick="switchScreen('main-menu', document.querySelectorAll('.sidebar-icon')[0])">НАЗАД</button>
+                <div class="gms-header"><div class="gms-title">ВЫБОР РЕЖИМА</div></div>
+                <div class="gms-grid">
+                    <div class="gms-card open" onclick="startFreeRoam()">
+                        <div class="gms-card-icon">🚶</div>
+                        <div class="gms-card-name">СВОБОДНЫЙ РЕЖИМ</div>
+                        <div class="gms-card-desc">Гуляй по карте. Оружие отключено.</div>
+                        <div class="gms-card-status open">ДОСТУПЕН</div>
+                    </div>
+                    <div class="gms-card" onclick="showGameplayLocked()">
+                        <div class="gms-card-icon">🎯</div>
+                        <div class="gms-card-name">ТРЕНИРОВКА</div>
+                        <div class="gms-card-desc">В разработке.</div>
+                        <div class="gms-card-status locked">ЗАКРЫТ</div>
+                    </div>
+                    <div class="gms-card" onclick="showGameplayLocked()">
+                        <div class="gms-card-icon">⚔️</div>
+                        <div class="gms-card-name">ДУЭЛЬ</div>
+                        <div class="gms-card-desc">В разработке.</div>
+                        <div class="gms-card-status locked">ЗАКРЫТ</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cases-screen" class="screen">
+                <button class="btn-back btn-back-corner" onclick="switchScreen('main-menu', document.querySelectorAll('.sidebar-icon')[0])">НАЗАД</button>
+                <div class="gms-header"><div class="gms-title">FIREBORN КЕЙСЫ</div></div>
+                <div class="cases-grid">
+                    <div class="case-card" onclick="openCase()">
+                        <div class="case-box-css"><div class="lock"></div></div>
+                        <div class="case-name">FIREBORN КЕЙС</div>
+                        <div class="case-price"><span class="coin-icon coin-silver"></span> 100</div>
+                        <div class="case-desc">Шанс на FIREBORN скин = 5%</div>
+                        <button class="case-buy-btn">ОТКРЫТЬ ЗА 100</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mail-screen" class="screen">
+                <button class="btn-back btn-back-corner" onclick="switchScreen('settings-screen', document.querySelectorAll('.sidebar-icon')[6])">НАЗАД</button>
+                <div class="mail-header"><div class="mail-title">ПОЧТА</div></div>
+                <div class="mail-list" id="mail-list"></div>
+            </div>
+
+            <div id="stats-screen" class="screen">
+                <div class="stats-container">
+                    <div class="kd-circle"><div class="kd-value">12</div><div class="kd-label">KD</div></div>
+                    <button class="history-btn" onclick="showToast('Недоступно')">ИСТОРИЯ МАТЧЕЙ</button>
+                    <button class="history-btn" onclick="showToast('Недоступно')">ДРУЗЬЯ</button>
+                </div>
+            </div>
+
+            <div id="settings-screen" class="screen">
+                <div class="settings-header">
+                    <div class="settings-tab active" onclick="switchSettingsTab('general', this)">ОСНОВНЫЕ</div>
+                    <div class="settings-tab" onclick="switchSettingsTab('graphics', this)">ГРАФИКА</div>
+                    <div class="settings-tab" onclick="switchSettingsTab('mail', this)">ПОЧТА<span class="tab-dot" id="settings-tab-mail-dot"></span></div>
+                    <div class="settings-tab" onclick="switchSettingsTab('about', this)">ОБНОВЛЕНИЕ</div>
+                </div>
+                <div id="settings-general" class="settings-content active">
+                    <div class="settings-item"><span>Громкость</span><input type="range" min="0" max="100" value="60" class="settings-range" oninput="setVolume(this.value)"></div>
+                    <div class="settings-item"><span>Свободный режим</span><div class="toggle-switch" id="toggle-free" onclick="toggleFree(this)"></div></div>
+                </div>
+                <div id="settings-graphics" class="settings-content">
+                    <div class="settings-item"><span>Показывать FPS</span><div class="toggle-switch" id="toggle-fps" onclick="toggleFPS(this)"></div></div>
+                </div>
+                <div id="settings-mail" class="settings-content" style="display:none;">
+                    <div style="grid-column: 1 / -1; width: 100%;">
+                        <div style="font-size: 15px; font-weight: 900; color: #d0d0d8; letter-spacing: 2px; margin-bottom: 12px;">СООБЩЕНИЯ</div>
+                        <div id="settings-mail-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                    </div>
+                </div>
+                <div id="settings-about" class="settings-content about-content">
+                    <div class="about-version">0.24.0</div>
+                    <div class="about-name">FIREBORN</div>
+                    <div class="about-sub">STANCHILLOW</div>
+                    <div class="about-badge">REWORK</div>
+                    <div class="about-info">
+                        <b>Google-регистрация</b>, свободный джойстик,<br>
+                        панель обновлений, <b>старая версия SYNDICATE</b>.
+                    </div>
+                </div>
+            </div>
+
+            <div id="shield-screen" class="screen">
+                <button class="btn-back btn-back-corner" onclick="switchScreen('main-menu', document.querySelectorAll('.sidebar-icon')[0])">НАЗАД</button>
+                <div class="settings-header" style="justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(160,160,180,0.2);">
+                    <div style="flex: 1;"><div style="font-size: 20px; font-weight: 900; color: #e8e8e8; letter-spacing: 4px;">КЛАН</div></div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; padding: 40px 20px 100px 20px;">
+                    <div class="sb-shield" style="color:#e8e8e8;width:80px;height:88px;margin-bottom:15px;"></div>
+                    <div style="font-size: 20px; font-weight: 900; color: #e8e8e8; letter-spacing: 4px; margin-bottom: 10px;">СОЗДАЙ СВОЙ КЛАН</div>
+                </div>
+                <button class="clan-create-lobby-btn" onclick="createClanLobby()">СОЗДАТЬ ЛОББИ</button>
+            </div>
+
+            <div id="clan-lobby-screen" class="screen">
+                <button class="btn-back btn-back-corner" onclick="exitClanLobby()">НАЗАД</button>
+                <div class="clan-lobby-header"><div class="clan-lobby-title">ЛОББИ КЛАНА</div></div>
+                <div class="clan-lobby-content">
+                    <div class="clan-room-card">
+                        <div class="clan-room-name">МОЙ КЛАН</div>
+                        <div class="clan-room-code">CODE: FIRE-2026</div>
+                        <div style="font-size: 11px; color: #707078; letter-spacing: 2px; margin-bottom: 5px;">УЧАСТНИКИ (1/8)</div>
+                        <div class="clan-players-list">
+                            <div class="clan-player you">
+                                <div class="player-avatar">🧔</div>
+                                <div class="player-name" id="clan-me">ID Offline (ТЫ)</div>
+                                <div class="player-tag">ЛИДЕР</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="clan-exit-btn" onclick="exitClanLobby()">← ВЫЙТИ ИЗ ЛОББИ</button>
+                </div>
+            </div>
+
+            <div id="inventory-screen" class="screen">
+                <div class="top-tabs">
+                    <div class="top-tab active" onclick="switchTopTab('inv', this)">ИНВЕНТАРЬ</div>
+                    <div class="top-tab market-tab" onclick="switchTopTab('market', this)">РЫНОК</div>
+                </div>
+                <div id="tab-inv" class="tab-panel active-tab"><div class="inventory-grid" id="inv-grid"></div></div>
+                <div id="tab-market" class="tab-panel">
+                    <div class="market-header">
+                        <div class="market-info">FIREBORN MARKET</div>
+                        <button class="market-refresh-btn" onclick="refreshMarket()">ОБНОВИТЬ</button>
+                    </div>
+                    <div class="market-grid" id="market-grid"></div>
+                </div>
+            </div>
+
+            <div id="earn-screen" class="screen">
+                <button class="btn-back btn-back-corner" onclick="switchScreen('main-menu', document.querySelectorAll('.sidebar-icon')[0])">НАЗАД</button>
+                <div class="earn-header"><div class="earn-title">ЗАРАБОТОК</div></div>
+                <div class="earn-tabs">
+                    <div class="earn-tab active" onclick="switchEarnTab('tap', this)">ТАПАЛКА</div>
+                    <div class="earn-tab" onclick="switchEarnTab('buy', this)">КУПИТЬ</div>
+                </div>
+                <div id="earn-tap" class="earn-content active-content">
+                    <div class="tap-game">
+                        <div class="tap-big-circle" id="tap-circle" onclick="tapCoin(event)"></div>
+                        <div class="tap-info">Тапай! <b>+1 монета</b><br>Всего: <b id="tap-total">0</b></div>
+                    </div>
+                </div>
+                <div id="earn-buy" class="earn-content">
+                    <div class="donate-grid">
+                        <div class="donate-card">
+                            <div class="price-tag">$4</div>
+                            <div class="gold-amount"><span class="coin-icon coin-gold"></span> 100</div>
+                            <div class="dev-badge">В РАЗРАБОТКЕ</div>
+                            <button class="buy-gold-btn" disabled>СКОРО</button>
+                        </div>
+                        <div class="donate-card">
+                            <div class="price-tag">$10</div>
+                            <div class="gold-amount"><span class="coin-icon coin-gold"></span> 1000</div>
+                            <div class="dev-badge">В РАЗРАБОТКЕ</div>
+                            <button class="buy-gold-btn" disabled>СКОРО</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="case-open-modal">
+        <div class="case-reel-wrap">
+            <div class="case-reel" id="case-reel"></div>
+            <div class="case-pointer"></div>
+        </div>
+        <div class="case-win-title" id="case-win-title">ПОБЕДА!</div>
+        <div class="case-win-item" id="case-win-item"></div>
+        <button class="case-close-btn" onclick="closeCase()">ЗАБРАТЬ</button>
+    </div>
+
+    <div id="mail-view-modal" class="mail-view-modal">
+        <div class="mail-view-content">
+            <button class="mail-view-close" onclick="closeMailView()">✕</button>
+            <div class="mail-view-title" id="mail-view-title"></div>
+            <div class="mail-view-date" id="mail-view-date"></div>
+            <div class="mail-view-body" id="mail-view-body"></div>
+        </div>
+    </div>
+
+    <div id="toast">Недоступно</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+'use strict';
+function $(id) { return document.getElementById(id); }
+
+const CURRENT_VERSION = '0.24.0';
+const PATCH_NOTES = {
+    '0.24.0': { sections: [
+        { title: '🔥 FIREBORN REWORK', items: [
+            { type: 'new', text: 'Обновление <b>0.24.0</b> — не ивент' },
+            { type: 'new', text: 'Новый сплэш <b>RISE GAMING</b>' },
+            { type: 'new', text: 'Новая загрузка в стиле <b>FIREBORN</b>' }
+        ]},
+        { title: '🔐 GOOGLE РЕГИСТРАЦИЯ', items: [
+            { type: 'new', text: 'Вход через <b>Google</b> как в оригинале' },
+            { type: 'fix', text: 'Гость <b>временно недоступен</b>' }
+        ]},
+        { title: '🎮 СВОБОДНЫЙ ДЖОЙСТИК', items: [
+            { type: 'new', text: 'Джойстик <b>появляется в точке касания</b>' },
+            { type: 'new', text: 'Можно крутить <b>свободно и как хочешь</b>' }
+        ]},
+        { title: '↶ СТАРЫЕ ВЕРСИИ', items: [
+            { type: 'new', text: '<b>v0.20.0 SYNDICATE</b> — доступна для игры' },
+            { type: 'new', text: 'Старое меню + <b>старая музыка</b>' }
+        ]}
+    ]}
+};
+
+const MAIL_MESSAGES = [
+    { id: 'm1', title: '🔥 FIREBORN REWORK — 0.24.0', from: 'Администрация', date: '11.10.2026', body: 'Обновление 0.24.0!\n\nЧто нового:\n• Google-регистрация\n• Свободный джойстик\n• Панель "Что нового"\n• Старая версия SYNDICATE' },
+    { id: 'm2', title: '↶ Старая версия SYNDICATE', from: 'Разработчики', date: '11.10.2026', body: 'Меню → Старые версии → v0.20.0 SYNDICATE\n\nКрасная тема, старая музыка!' },
+    { id: 'm3', title: '🎮 Свободный джойстик', from: 'Разработчики', date: '11.10.2026', body: 'Теперь джойстик появляется в точке касания и можно крутить его как хочешь!' }
+];
+
+const MARKET_ITEMS = [
+    { name: 'Fireborn Нож', icon: '🔥', rarity: 'fire', basePrice: 5000 },
+    { name: 'AK-47 "Пламя"', icon: '🔥', rarity: 'fire', basePrice: 4500 },
+    { name: 'AWM "Дракон"', icon: '🎯', rarity: 'fire', basePrice: 6000 },
+    { name: 'Нож "Классика"', icon: '🗡️', rarity: 'blue', basePrice: 200 },
+    { name: 'Нож "Дракон"', icon: '🗡️', rarity: 'red', basePrice: 550 },
+    { name: 'Керамбит "Випер"', icon: '🔪', rarity: 'red', basePrice: 700 }
+];
+const CASE_ITEMS = [
+    { name: 'Нож "Классика"', icon: '🗡️', rarity: 'blue', weight: 30 },
+    { name: 'Нож "Дракон"', icon: '🗡️', rarity: 'red', weight: 20 },
+    { name: 'Керамбит "Випер"', icon: '🔪', rarity: 'red', weight: 15 },
+    { name: 'AK-47 "Пламя"', icon: '🔥', rarity: 'fire', weight: 8 },
+    { name: 'AWM "Дракон"', icon: '🎯', rarity: 'fire', weight: 5 },
+    { name: 'Fireborn Нож', icon: '🔥', rarity: 'fire', weight: 3 }
+];
+const SELLERS = ['fire_king','dragon_born','stanchillow_pro','kolya_2010'];
+let marketLots = [];
+
+let gold = 0, silver = 0, tapTotal = 0;
+let selectedAvatar = null, equippedItem = null;
+let readMails = new Set(), ownedItems = new Set();
+let showFPS = false, freeMode = false;
+let playerNick = 'ID Offline';
+let syndicateMode = false;
+let audioCtx = null, masterGain = null, currentMusicVolume = 0.13;
+
+function makeSO2Avatar(bg1, bg2, symbol, symbolColor) {
+    const uid = 'g' + Math.random().toString(36).slice(2, 8);
+    return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="so2-avatar-svg">' +
+        '<defs><linearGradient id="' + uid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + bg1 + '"/><stop offset="1" stop-color="' + bg2 + '"/></linearGradient></defs>' +
+        '<rect width="100" height="100" fill="url(#' + uid + ')"/>' +
+        '<text x="50" y="62" text-anchor="middle" font-size="52" font-weight="900" fill="' + symbolColor + '" font-family="Arial,sans-serif">' + symbol + '</text></svg>';
+}
+const SO2_AVATARS = [
+    { id: 'so2_1', svg: makeSO2Avatar('#909098','#3a3a45','S','#fff') },
+    { id: 'so2_2', svg: makeSO2Avatar('#c03030','#500000','F','#fff') },
+    { id: 'so2_3', svg: makeSO2Avatar('#4a90e2','#1a4a8a','★','#ffd700') },
+    { id: 'so2_4', svg: makeSO2Avatar('#2a2a2a','#000000','◆','#c0c0d0') },
+    { id: 'so2_5', svg: makeSO2Avatar('#4ade80','#1a6a30','♣','#000') },
+    { id: 'so2_6', svg: makeSO2Avatar('#a020ff','#4a0a8a','♠','#fff') },
+    { id: 'so2_7', svg: makeSO2Avatar('#ffd700','#8a7020','♛','#000') },
+    { id: 'so2_8', svg: makeSO2Avatar('#ff50a8','#8a1a4a','♥','#fff') },
+    { id: 'so2_9', svg: makeSO2Avatar('#00d4ff','#005a7a','✪','#000') },
+    { id: 'so2_10', svg: makeSO2Avatar('#8a4a10','#3a1a08','X','#ffd700') },
+    { id: 'so2_11', svg: makeSO2Avatar('#4a4a4a','#1a1a1a','◉','#c0c0d0') },
+    { id: 'so2_12', svg: makeSO2Avatar('#c03030','#500000','T','#fff') }
+];
+
+try {
+    const saved = JSON.parse(localStorage.getItem('beholder_save') || '{}');
+    if (saved.gold) gold = saved.gold;
+    if (saved.silver) silver = saved.silver;
+    if (saved.tapTotal) tapTotal = saved.tapTotal;
+    if (saved.selectedAvatar) selectedAvatar = saved.selectedAvatar;
+    if (saved.equippedItem) equippedItem = saved.equippedItem;
+    if (saved.readMails) readMails = new Set(saved.readMails);
+    if (saved.ownedItems) ownedItems = new Set(saved.ownedItems);
+    if (saved.showFPS) showFPS = saved.showFPS;
+    if (saved.freeMode) freeMode = saved.freeMode;
+    if (saved.playerNick) playerNick = saved.playerNick;
+} catch(e) {}
+if (!selectedAvatar) selectedAvatar = SO2_AVATARS[0].id;
+function save() {
+    try { localStorage.setItem('beholder_save', JSON.stringify({ gold: gold, silver: silver, tapTotal: tapTotal, selectedAvatar: selectedAvatar, equippedItem: equippedItem, readMails: Array.from(readMails), ownedItems: Array.from(ownedItems), showFPS: showFPS, freeMode: freeMode, playerNick: playerNick })); } catch(e) {}
+}
+
+function checkOrientation() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (isPortrait) document.body.classList.add('portrait'); else document.body.classList.remove('portrait');
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', function() { setTimeout(checkOrientation, 150); });
+
+function showToast(msg, type) {
+    const t = $('toast'); if (!t) return;
+    t.textContent = msg;
+    t.className = 'show ' + (type || '');
+    setTimeout(function() { if (t) t.className = ''; }, 2000);
+}
+
+function getAvatarHTML() {
+    if (!selectedAvatar) return SO2_AVATARS[0].svg;
+    if (selectedAvatar.indexOf('data:') === 0) return '<img src="' + selectedAvatar + '" style="width:100%;height:100%;object-fit:cover;">';
+    const av = SO2_AVATARS.find(function(a) { return a.id === selectedAvatar; });
+    return av ? av.svg : SO2_AVATARS[0].svg;
+}
+function updateAvatarUI() { const big = $('main-avatar-big'); if (big) big.innerHTML = getAvatarHTML(); }
+function renderAvatarsModal() {
+    const grid = $('avatars-grid-modal'); if (!grid) return;
+    grid.innerHTML = '';
+    if (selectedAvatar && selectedAvatar.indexOf('data:') === 0) {
+        const el = document.createElement('div');
+        el.className = 'so2-avatar selected';
+        el.innerHTML = '<img src="' + selectedAvatar + '" style="width:100%;height:100%;object-fit:cover;">';
+        el.onclick = function() { selectAvatar(selectedAvatar); };
+        grid.appendChild(el);
+    }
+    SO2_AVATARS.forEach(function(av) {
+        const el = document.createElement('div');
+        el.className = 'so2-avatar' + (selectedAvatar === av.id ? ' selected' : '');
+        el.innerHTML = av.svg;
+        el.onclick = function() { selectAvatar(av.id); };
+        grid.appendChild(el);
+    });
+}
+function selectAvatar(id) { selectedAvatar = id; save(); updateAvatarUI(); renderAvatarsModal(); showToast('Аватарка изменена!', 'success'); }
+function openAvatarModal() { const m = $('avatar-modal'); if (m) m.classList.add('show'); renderAvatarsModal(); }
+function closeAvatarModal() { const m = $('avatar-modal'); if (m) m.classList.remove('show'); }
+function handleAvatarUpload(e) {
+    const file = e.target.files[0]; if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { showToast('Файл слишком большой (макс 3MB)', ''); return; }
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200; canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            const size = Math.min(img.width, img.height);
+            const sx = (img.width - size) / 2, sy = (img.height - size) / 2;
+            ctx.drawImage(img, sx, sy, size, size, 0, 0, 200, 200);
+            selectedAvatar = canvas.toDataURL('image/jpeg', 0.8);
+            save(); updateAvatarUI(); renderAvatarsModal();
+            showToast('Аватарка загружена!', 'success');
+            e.target.value = '';
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function openNickModal() { const i = $('nick-input'); if (i) i.value = playerNick; const m = $('nick-modal'); if (m) m.classList.add('show'); setTimeout(function() { if (i) i.focus(); }, 200); }
+function closeNickModal() { const m = $('nick-modal'); if (m) m.classList.remove('show'); }
+function saveNick() {
+    const input = $('nick-input'); if (!input) return;
+    const val = input.value.trim();
+    if (val.length < 3 || val.length > 16) { showToast('Ник от 3 до 16 символов', ''); return; }
+    playerNick = val; save();
+    const nick = $('menu-nick'); if (nick) nick.textContent = playerNick;
+    const cl = $('clan-me');
+    if (cl) cl.innerHTML = playerNick + ' <span style="color:#909098;font-size:11px;">(ТЫ)</span>';
+    closeNickModal(); showToast('Ник изменён!', 'success');
+}
+document.addEventListener('keydown', function(e) { const m = $('nick-modal'); if (e.key === 'Enter' && m && m.classList.contains('show')) saveNick(); });
+
+function loginGoogle() { playerNick = 'Player_' + Math.floor(1000 + Math.random() * 9000); save(); startAfterLogin(); showToast('Вход через Google!', 'success'); }
+function startAfterLogin() {
+    const ls = $('login-screen'); if (ls) ls.classList.remove('active');
+    const ld = $('loading-screen'); if (ld) ld.classList.add('active');
+    const nick = $('menu-nick'); if (nick) nick.textContent = playerNick;
+    const cl = $('clan-me');
+    if (cl) cl.innerHTML = playerNick + ' <span style="color:#909098;font-size:11px;">(ТЫ)</span>';
+    updateAvatarUI();
+    startGameLoading();
+}
+
+function startGameLoading() {
+    const fill = $('loading-fill'), percent = $('loading-percent'), status = $('loading-status');
+    if (!fill || !percent || !status) { showPatchNotes(); return; }
+    let p = 0;
+    const iv = setInterval(function() {
+        p += 2;
+        if (p >= 100) { p = 100; clearInterval(iv); fill.style.width = '100%'; percent.textContent = '100%'; status.textContent = 'Готово!'; setTimeout(showPatchNotes, 400); return; }
+        fill.style.width = p + '%'; percent.textContent = Math.round(p) + '%';
+    }, 30);
+}
+function showPatchNotes() {
+    const patch = $('patch-notes'), closeBtn = $('patch-close'), timerEl = $('patch-timer'), content = $('patch-content');
+    if (!patch || !content) { goToMenu(); return; }
+    const notes = PATCH_NOTES[CURRENT_VERSION];
+    if (!notes) { goToMenu(); return; }
+    const now = new Date();
+    const dateStr = String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
+    let html = '<div class="patch-version">v' + CURRENT_VERSION + '</div><div class="patch-title">🔥 ЧТО НОВОГО</div><div class="patch-date">ОБНОВЛЕНИЕ · ' + dateStr + '</div>';
+    notes.sections.forEach(function(s) {
+        html += '<div class="patch-section"><h3>' + s.title + '</h3><ul>';
+        s.items.forEach(function(it) { const cls = it.type === 'fix' ? 'fix' : ''; html += '<li class="' + cls + '">' + it.text + '</li>'; });
+        html += '</ul></div>';
+    });
+    content.innerHTML = html;
+    patch.classList.add('show');
+    if (closeBtn) closeBtn.classList.remove('show');
+    if (timerEl) timerEl.style.display = 'block';
+    let s = 3;
+    if (timerEl) timerEl.textContent = 'Закрыть через ' + s + 'с';
+    const iv = setInterval(function() {
+        s--;
+        if (s <= 0) { clearInterval(iv); if (closeBtn) closeBtn.classList.add('show'); if (timerEl) timerEl.style.display = 'none'; }
+        else if (timerEl) timerEl.textContent = 'Закрыть через ' + s + 'с';
+    }, 1000);
+}
+function showUpdatePanel() { showPatchNotes(); }
+function closePatchNotes() { const p = $('patch-notes'); if (p) p.classList.remove('show'); goToMenu(); }
+function goToMenu() {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    const mm = $('main-menu'); if (mm) mm.classList.add('active');
+    const sb = $('sidebar'); if (sb) sb.style.display = 'flex';
+    const gd = $('gold-display'); if (gd) gd.classList.add('show');
+    const sd = $('silver-display'); if (sd) sd.classList.add('show');
+    const nick = $('menu-nick'); if (nick) nick.textContent = playerNick;
+    updateAvatarUI(); updateCurrencyUI(); ensureMenuMusicPlaying();
+}
+function showGameplayLocked() { const m = $('gameplay-locked-modal'); if (m) m.classList.add('show'); }
+function closeGameplayLocked() { const m = $('gameplay-locked-modal'); if (m) m.classList.remove('show'); }
+function openOldVersions() { const m = $('old-versions-modal'); if (m) m.classList.add('show'); }
+function closeOldVersions() { const m = $('old-versions-modal'); if (m) m.classList.remove('show'); }
+
+/* ==== OLD VERSION LAUNCH ==== */
+function playOldVersion(ver) {
+    closeOldVersions();
+    if (ver === '0.20.0') {
+        // Активировать режим SYNDICATE
+        syndicateMode = true;
+        document.body.classList.add('syndicate-mode');
+        // Сменить тексты меню
+        const logo = document.querySelector('.menu-logo-mini');
+        if (logo) logo.innerHTML = 'STAN<span class="chillow">CHILLOW</span>';
+        const season = $('menu-season-text');
+        if (season) season.textContent = 'SYNDICATE · v0.20.0';
+        const verEl = $('menu-version-text');
+        if (verEl) verEl.textContent = 'v0.20.0';
+        const sTitle = $('menu-slogan-title');
+        if (sTitle) sTitle.textContent = 'Syndicate';
+        const sSub = $('menu-slogan-sub');
+        if (sSub) sSub.textContent = 'EVENT · 0.20.0';
+        // Сменить музыку
+        stopMusic();
+        currentMusicType = 'syndicate';
+        // Показать загрузку старой версии
+        const ls = $('loading-screen'); if (ls) ls.classList.add('active');
+        document.querySelectorAll('.screen').forEach(function(s) { if (s.id !== 'loading-screen') s.classList.remove('active'); });
+        const lt = $('loading-title'); if (lt) lt.textContent = 'SYNDICATE';
+        const lst = $('loading-subtitle'); if (lst) lst.textContent = 'EVENT · v0.20.0';
+        const vc = document.querySelector('.ver-corner'); if (vc) vc.textContent = 'VERSION 0.20.0';
+        // Прогресс
+        const fill = $('loading-fill'), percent = $('loading-percent'), status = $('loading-status');
+        let p = 0;
+        if (fill) fill.style.width = '0%';
+        if (percent) percent.textContent = '0%';
+        const iv = setInterval(function() {
+            p += 3;
+            if (p >= 100) {
+                p = 100; clearInterval(iv);
+                if (fill) fill.style.width = '100%';
+                if (percent) percent.textContent = '100%';
+                if (status) status.textContent = 'Загрузка SYNDICATE...';
+                setTimeout(function() {
+                    goToMenu();
+                    showToast('🔥 SYNDICATE v0.20.0 загружен!', 'success');
+                    // Запуск старой музыки
+                    setTimeout(function() { if (audioCtx && audioCtx.state === 'running') playMusic(); }, 300);
+                }, 800);
+                return;
+            }
+            if (fill) fill.style.width = p + '%';
+            if (percent) percent.textContent = Math.round(p) + '%';
+        }, 60);
+    }
+}
+
+/* ==== CURRENCY ==== */
+function updateCurrencyUI() {
+    const gt = $('gold-top'); if (gt) gt.textContent = gold;
+    const st = $('silver-top'); if (st) st.textContent = silver;
+    const tt = $('tap-total'); if (tt) tt.textContent = tapTotal;
+    updateMailBadge(); renderSettingsMailList();
+}
+function updateMailBadge() {
+    const unread = MAIL_MESSAGES.filter(function(m) { return !readMails.has(m.id); }).length;
+    const dot = $('settings-dot'), tabDot = $('settings-tab-mail-dot');
+    if (dot) dot.classList.toggle('show', unread > 0);
+    if (tabDot) tabDot.classList.toggle('show', unread > 0);
+}
+function renderSettingsMailList() {
+    const list = $('settings-mail-list'); if (!list) return;
+    list.innerHTML = '';
+    MAIL_MESSAGES.forEach(function(msg) {
+        const unread = !readMails.has(msg.id);
+        const el = document.createElement('div');
+        el.style.cssText = 'background: rgba(40,40,48,0.9); border: 1px solid ' + (unread ? 'rgba(200,200,210,0.5)' : 'rgba(160,160,180,0.15)') + '; border-radius: 8px; padding: 12px 15px; cursor: pointer;';
+        el.innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-weight:900;font-size:12px;color:' + (unread ? '#d0d0d8' : '#fff') + ';">' + msg.title + '</div><div style="font-size:10px;color:#666;">' + msg.date + '</div></div><div style="font-size:10px;color:#909098;">от ' + msg.from + '</div>';
+        el.onclick = function() { openMailView(msg.id); };
+        list.appendChild(el);
+    });
+}
+
+function switchScreen(id, icon) {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    const target = $(id);
+    if (!target) { console.warn('Экран не найден: ' + id); return; }
+    target.classList.add('active');
+    const sidebar = $('sidebar');
+    const noSidebar = ['free-roam-screen','game-mode-screen','earn-screen','clan-lobby-screen','login-screen'];
+    if (sidebar) sidebar.style.display = noSidebar.indexOf(id) >= 0 ? 'none' : 'flex';
+    if (icon) { document.querySelectorAll('.sidebar-icon').forEach(function(i) { i.classList.remove('active'); }); icon.classList.add('active'); }
+    const gd = $('gold-display'), sd = $('silver-display');
+    if (gd && sd) {
+        if (id === 'inventory-screen' || id === 'earn-screen') { gd.classList.add('show'); sd.classList.remove('show'); }
+        else if (id === 'cases-screen') { sd.classList.add('show'); gd.classList.remove('show'); }
+        else { gd.classList.add('show'); sd.classList.add('show'); }
+    }
+    if (id === 'inventory-screen') renderInventory();
+    if (id === 'mail-screen') renderMail();
+    if (id === 'settings-screen') {
+        const tf = $('toggle-fps'); if (tf) tf.classList.toggle('active', showFPS);
+        const tfree = $('toggle-free'); if (tfree) tfree.classList.toggle('active', freeMode);
+        renderSettingsMailList();
+    }
+    if (id === 'main-menu') ensureMenuMusicPlaying();
+}
+function switchSettingsTab(id, el) {
+    document.querySelectorAll('.settings-content').forEach(function(c) { c.classList.remove('active'); });
+    const content = $('settings-' + id); if (content) content.classList.add('active');
+    document.querySelectorAll('.settings-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    if (id === 'mail') renderSettingsMailList();
+}
+function switchTopTab(tab, el) {
+    document.querySelectorAll('.top-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active-tab'); });
+    const panel = $('tab-' + tab); if (panel) panel.classList.add('active-tab');
+    if (tab === 'market') { if (marketLots.length === 0) generateMarket(); renderMarket(); }
+}
+function switchEarnTab(tab, el) {
+    document.querySelectorAll('.earn-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.earn-content').forEach(function(c) { c.classList.remove('active-content'); });
+    const content = $('earn-' + tab); if (content) content.classList.add('active-content');
+}
+
+function renderMail() {
+    const list = $('mail-list'); if (!list) return;
+    list.innerHTML = '';
+    MAIL_MESSAGES.forEach(function(msg) {
+        const isUnread = !readMails.has(msg.id);
+        const el = document.createElement('div');
+        el.className = 'mail-item' + (isUnread ? ' unread' : '');
+        el.innerHTML = '<div class="mail-item-header"><div class="mail-item-title">' + msg.title + '</div><div class="mail-item-date">' + msg.date + '</div></div><div class="mail-item-from">от ' + msg.from + '</div><div class="mail-item-preview">' + msg.body.substring(0, 60) + '...</div>';
+        el.onclick = function() { openMailView(msg.id); };
+        list.appendChild(el);
+    });
+}
+function openMailView(id) {
+    const msg = MAIL_MESSAGES.find(function(m) { return m.id === id; }); if (!msg) return;
+    readMails.add(id); save(); updateMailBadge(); renderSettingsMailList();
+    const t = $('mail-view-title'), d = $('mail-view-date'), b = $('mail-view-body'), m = $('mail-view-modal');
+    if (t) t.textContent = msg.title;
+    if (d) d.textContent = msg.date + ' · от ' + msg.from;
+    if (b) b.textContent = msg.body;
+    if (m) m.classList.add('show');
+    renderMail();
+}
+function closeMailView() { const m = $('mail-view-modal'); if (m) m.classList.remove('show'); }
+
+function renderInventory() {
+    const grid = $('inv-grid'); if (!grid) return;
+    grid.innerHTML = '';
+    const allItems = [{id: 'start_knife', name: 'Нож "Классика"', icon: '🗡️', rarity: 'blue'}];
+    Array.from(ownedItems).forEach(function(itemId) {
+        const item = MARKET_ITEMS.find(function(i) { return i.name === itemId; });
+        if (item) allItems.push({id: itemId, name: item.name, icon: item.icon, rarity: item.rarity});
+    });
+    allItems.forEach(function(item) {
+        const isEquipped = equippedItem === item.id;
+        const card = document.createElement('div');
+        card.className = 'item-card' + (isEquipped ? ' equipped' : '');
+        card.onclick = function() { equipItem(item.id, item.name); };
+        card.innerHTML = '<div class="item-image">' + item.icon + '</div><div class="item-name">' + item.name + '</div><div class="item-rarity rarity-' + item.rarity + '">' + item.rarity.toUpperCase() + '</div>';
+        grid.appendChild(card);
+    });
+}
+function equipItem(id, name) {
+    if (equippedItem === id) { equippedItem = null; showToast('Снято: ' + name, ''); }
+    else { equippedItem = id; showToast('Надето: ' + name, 'success'); }
+    save(); renderInventory();
+}
+function generateMarket() {
+    marketLots = [];
+    const used = new Set();
+    const count = 6 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+        let item, attempts = 0;
+        do { item = MARKET_ITEMS[Math.floor(Math.random() * MARKET_ITEMS.length)]; attempts++; } while (used.has(item.name) && attempts < 20);
+        used.add(item.name);
+        const discount = Math.floor(Math.random() * 4) * 5;
+        const price = Math.round(item.basePrice * (1 - discount / 100));
+        marketLots.push({ id: 'lot_' + i, name: item.name, icon: item.icon, rarity: item.rarity, price: price, seller: SELLERS[Math.floor(Math.random() * SELLERS.length)] });
+    }
+}
+function renderMarket() {
+    const grid = $('market-grid'); if (!grid) return;
+    grid.innerHTML = '';
+    marketLots.forEach(function(lot) {
+        const owned = ownedItems.has(lot.name);
+        const canAfford = gold >= lot.price;
+        const card = document.createElement('div');
+        card.className = 'market-lot' + (owned ? ' owned' : '');
+        card.innerHTML = '<div class="seller">от <b>' + lot.seller + '</b></div><div class="item-image">' + lot.icon + '</div><div class="item-name">' + lot.name + '</div><div class="item-rarity rarity-' + lot.rarity + '">' + lot.rarity.toUpperCase() + '</div><div style="color:#ffd700;font-weight:900;font-size:13px;margin-top:6px;">Монеты: ' + lot.price + '</div><button class="market-buy-btn ' + (owned ? 'owned' : '') + '" ' + (owned || !canAfford ? 'disabled' : '') + ' onclick="buyMarketItem(\'' + lot.id + '\')">' + (owned ? '✓' : (canAfford ? 'КУПИТЬ' : 'НЕ ХВАТАЕТ')) + '</button>';
+        grid.appendChild(card);
+    });
+}
+function refreshMarket() { generateMarket(); renderMarket(); }
+function buyMarketItem(lotId) {
+    const lot = marketLots.find(function(l) { return l.id === lotId; }); if (!lot) return;
+    if (ownedItems.has(lot.name)) { showToast('Уже куплено!', ''); return; }
+    if (gold < lot.price) { showToast('Недостаточно монет!', ''); return; }
+    gold -= lot.price; ownedItems.add(lot.name);
+    updateCurrencyUI(); save(); renderMarket();
+    showToast('Куплено: ' + lot.name, 'success');
+}
+function tapCoin(e) {
+    e.preventDefault(); gold += 1; tapTotal += 1; updateCurrencyUI(); save();
+    const circle = $('tap-circle'); if (!circle) return;
+    const rect = circle.getBoundingClientRect();
+    const fx = document.createElement('div');
+    fx.className = 'floating-gold'; fx.textContent = '+1';
+    fx.style.left = (rect.left + rect.width/2 - 20) + 'px';
+    fx.style.top = (rect.top + rect.height/2) + 'px';
+    const rot = $('rotator'); if (rot) rot.appendChild(fx);
+    setTimeout(function() { fx.remove(); }, 1000);
+}
+function createClanLobby() {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    const cls = $('clan-lobby-screen'); if (cls) cls.classList.add('active');
+    const sb = $('sidebar'); if (sb) sb.style.display = 'none';
+    const gd = $('gold-display'); if (gd) gd.classList.remove('show');
+    const sd = $('silver-display'); if (sd) sd.classList.remove('show');
+}
+function exitClanLobby() {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    const ss = $('shield-screen'); if (ss) ss.classList.add('active');
+    const sb = $('sidebar'); if (sb) sb.style.display = 'flex';
+    const gd = $('gold-display'); if (gd) gd.classList.add('show');
+    const sd = $('silver-display'); if (sd) sd.classList.add('show');
+}
+function openCase() {
+    if (silver < 100 && !freeMode) { showToast('Не хватает серебра!', ''); return; }
+    if (!freeMode) silver -= 100;
+    updateCurrencyUI(); save();
+    const modal = $('case-open-modal'); if (modal) modal.classList.add('show');
+    const ct = $('case-win-title'), ci = $('case-win-item'), reel = $('case-reel');
+    if (ct) ct.classList.remove('show');
+    if (ci) ci.classList.remove('show');
+    if (!reel) return;
+    reel.style.transition = 'none'; reel.style.transform = 'translateX(0)'; reel.innerHTML = '';
+    const items = [];
+    const totalW = CASE_ITEMS.reduce(function(a, b) { return a + b.weight; }, 0);
+    for (let i = 0; i < 50; i++) {
+        let r = Math.random() * totalW, picked = CASE_ITEMS[0];
+        for (let j = 0; j < CASE_ITEMS.length; j++) { r -= CASE_ITEMS[j].weight; if (r <= 0) { picked = CASE_ITEMS[j]; break; } }
+        items.push(picked);
+    }
+    let r2 = Math.random() * totalW, winner = CASE_ITEMS[0];
+    for (let j = 0; j < CASE_ITEMS.length; j++) { r2 -= CASE_ITEMS[j].weight; if (r2 <= 0) { winner = CASE_ITEMS[j]; break; } }
+    items[44] = winner;
+    items.forEach(function(it) {
+        const el = document.createElement('div');
+        el.className = 'case-reel-item';
+        el.innerHTML = '<div class="ic">' + it.icon + '</div><div class="nm">' + it.name + '</div>';
+        reel.appendChild(el);
+    });
+    setTimeout(function() {
+        const wrap = reel.parentElement; if (!wrap) return;
+        const wrapW = wrap.clientWidth;
+        const targetOffset = -(44 * 140 + 70 - wrapW / 2);
+        reel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)';
+        reel.style.transform = 'translateX(' + targetOffset + 'px)';
+    }, 50);
+    setTimeout(function() {
+        if (ct) ct.textContent = winner.rarity === 'fire' ? 'FIREBORN!' : 'ПОБЕДА!';
+        if (ci) ci.textContent = winner.icon + ' ' + winner.name;
+        if (ct) ct.classList.add('show');
+        if (ci) ci.classList.add('show');
+        ownedItems.add(winner.name); save();
+    }, 4200);
+}
+function closeCase() { const m = $('case-open-modal'); if (m) m.classList.remove('show'); }
+function setVolume(v) { currentMusicVolume = (v/100) * 0.35; if (masterGain) masterGain.gain.value = currentMusicVolume; }
+function toggleFPS(el) { showFPS = !showFPS; if (el) el.classList.toggle('active', showFPS); const fd = $('fps-display'); if (fd) fd.classList.toggle('show', showFPS); save(); }
+function toggleFree(el) { freeMode = !freeMode; if (el) el.classList.toggle('active', freeMode); if (freeMode) { gold = 9999999; showToast('Свободный режим!', 'success'); } save(); updateCurrencyUI(); }
+
+/* ==== FREE ROAM with FREE JOYSTICK ==== */
+let frRunning = false, frAnimId = null;
+let frPlayer = { x: 0, z: 0, yaw: 0, pitch: 0 };
+let frKeys = { w: false, a: false, s: false, d: false };
+let frJoy = { active: false, touchId: null, baseX: 0, baseY: 0, dx: 0, dy: 0 };
+let frLook = { active: false, touchId: null, lastX: 0, lastY: 0 };
+let frScene, frCamera, frRenderer;
+let frStepTimer = 0, frLastTime = 0;
+let frCtx2D = null, frMode2D = false;
+
+function startFreeRoam() {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    const frs = $('free-roam-screen'); if (frs) frs.classList.add('active');
+    const sb = $('sidebar'); if (sb) sb.style.display = 'none';
+    const gd = $('gold-display'); if (gd) gd.classList.remove('show');
+    const sd = $('silver-display'); if (sd) sd.classList.remove('show');
+    if (masterGain && audioCtx) { try { masterGain.gain.cancelScheduledValues(audioCtx.currentTime); masterGain.gain.linearRampToValueAtTime(0.03, audioCtx.currentTime + 1); } catch(e) {} }
+    startNatureSounds();
+    setTimeout(initFreeRoam, 150);
+}
+function stopFreeRoam() {
+    frRunning = false;
+    if (frAnimId) cancelAnimationFrame(frAnimId);
+    stopNatureSounds();
+    if (masterGain && audioCtx) { try { masterGain.gain.cancelScheduledValues(audioCtx.currentTime); masterGain.gain.linearRampToValueAtTime(currentMusicVolume, audioCtx.currentTime + 1); } catch(e) {} }
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    const gms = $('game-mode-screen'); if (gms) gms.classList.add('active');
+    const sb = $('sidebar'); if (sb) sb.style.display = 'none';
+    const jv = $('fr-joy-visual'); if (jv) jv.classList.remove('show');
+}
+function initFreeRoam() {
+    const canvas = $('free-canvas'); if (!canvas) return;
+    const W = canvas.clientWidth || window.innerWidth;
+    const H = canvas.clientHeight || window.innerHeight;
+    if (typeof THREE === 'undefined') { initFreeRoam2D(canvas, W, H); return; }
+    try {
+        frScene = new THREE.Scene();
+        frScene.background = new THREE.Color(0x0a0a0c);
+        frScene.fog = new THREE.Fog(0x0a0a0c, 20, 60);
+        frCamera = new THREE.PerspectiveCamera(75, W/H, 0.1, 200);
+        frCamera.rotation.order = 'YXZ';
+        frRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        frRenderer.setSize(W, H, false);
+        frRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        frScene.add(new THREE.AmbientLight(0x8090a0, 0.85));
+        const dir = new THREE.DirectionalLight(0xffffff, 0.9); dir.position.set(15, 30, 15); frScene.add(dir);
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.95 }));
+        ground.rotation.x = -Math.PI/2; frScene.add(ground);
+        const grid = new THREE.GridHelper(60, 30, 0x707078, 0x4a4a55);
+        grid.position.y = 0.02; grid.material.opacity = 0.4; grid.material.transparent = true; frScene.add(grid);
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x4a4a55, roughness: 0.9 });
+        [[0,-30,60,1],[0,30,60,1],[-30,0,1,60],[30,0,1,60]].forEach(function(w) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w[2], 4, w[3]), wallMat); m.position.set(w[0], 2, w[1]); frScene.add(m);
+        });
+        const crateMat = new THREE.MeshStandardMaterial({ color: 0x707078, roughness: 0.85 });
+        [[-15,-15,2.5],[15,-15,2],[-12,10,3],[10,12,2.5],[5,-8,2],[-8,5,2.5],[20,20,3],[-20,-5,2]].forEach(function(c) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(c[2], c[2], c[2]), crateMat); m.position.set(c[0], c[2]/2, c[1]); m.rotation.y = Math.random() * Math.PI; frScene.add(m);
+        });
+        const hiddenWall = new THREE.Mesh(new THREE.PlaneGeometry(8, 3), new THREE.MeshBasicMaterial({ map: makeHiddenTexture() }));
+        hiddenWall.position.set(0, 2, -29.4); frScene.add(hiddenWall);
+        frRunning = true;
+        frPlayer = { x: 0, z: 0, yaw: 0, pitch: 0 };
+        frKeys = { w: false, a: false, s: false, d: false };
+        bindFreeRoamControls();
+        frMode2D = false;
+        frLastTime = performance.now();
+        animateFreeRoam();
+    } catch(e) { initFreeRoam2D(canvas, W, H); }
+}
+function initFreeRoam2D(canvas, W, H) {
+    frCtx2D = canvas.getContext('2d');
+    frMode2D = true; frRunning = true;
+    frPlayer = { x: 0, z: 0, yaw: 0, pitch: 0 };
+    frKeys = { w: false, a: false, s: false, d: false };
+    function resize() { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
+    resize(); window.addEventListener('resize', resize);
+    bindFreeRoamControls();
+    frLastTime = performance.now();
+    animateFreeRoam();
+}
+function makeHiddenTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 192;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#2a2a30'; ctx.fillRect(0, 0, 512, 192);
+    ctx.fillStyle = 'rgba(200,200,210,0.85)';
+    ctx.font = 'bold 90px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('тццц😜', 256, 96);
+    return new THREE.CanvasTexture(c);
+}
+function bindFreeRoamControls() {
+    const joyZone = $('fr-joy-zone'), joyVisual = $('fr-joy-visual'), knob = $('fr-knob'), look = $('fr-look-zone');
+    if (!joyZone || !joyVisual || !knob || !look) return;
+
+    // Свободный джойстик: база появляется в точке касания
+    function joyStart(e) {
+        e.preventDefault(); e.stopPropagation();
+        const touch = e.changedTouches ? e.changedTouches[0] : e;
+        frJoy.touchId = e.changedTouches ? touch.identifier : 'mouse';
+        frJoy.active = true;
+        frJoy.baseX = touch.clientX;
+        frJoy.baseY = touch.clientY;
+        // Показать визуал в точке касания
+        joyVisual.style.left = touch.clientX + 'px';
+        joyVisual.style.top = touch.clientY + 'px';
+        joyVisual.classList.add('show');
+        joyMove(e);
+    }
+    function joyMove(e) {
+        if (!frJoy.active) return;
+        let touch = null;
+        if (e.changedTouches) { for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === frJoy.touchId) { touch = e.changedTouches[i]; break; } } if (!touch) return; }
+        else { if (frJoy.touchId !== 'mouse') return; touch = e; }
+        e.preventDefault();
+        const dx = touch.clientX - frJoy.baseX, dy = touch.clientY - frJoy.baseY;
+        const max = 55, mag = Math.hypot(dx, dy);
+        let nx = dx, ny = dy;
+        if (mag > max) { nx = dx/mag*max; ny = dy/mag*max; }
+        knob.style.transform = 'translate(' + nx + 'px, ' + ny + 'px)';
+        frJoy.dx = dx / max; frJoy.dy = dy / max;
+        const m = Math.hypot(frJoy.dx, frJoy.dy);
+        if (m > 1) { frJoy.dx /= m; frJoy.dy /= m; }
+    }
+    function joyEnd() {
+        if (!frJoy.active) return;
+        frJoy.active = false; frJoy.dx = 0; frJoy.dy = 0; frJoy.touchId = null;
+        knob.style.transform = 'translate(0, 0)';
+        joyVisual.classList.remove('show');
+    }
+    joyZone.addEventListener('touchstart', joyStart, { passive: false });
+    joyZone.addEventListener('mousedown', joyStart);
+    document.addEventListener('touchmove', joyMove, { passive: false });
+    document.addEventListener('touchend', joyEnd);
+    document.addEventListener('touchcancel', joyEnd);
+    document.addEventListener('mouseup', joyEnd);
+
+    function lookStart(e) {
+        e.preventDefault(); e.stopPropagation();
+        const touch = e.changedTouches ? e.changedTouches[0] : e;
+        frLook.touchId = e.changedTouches ? touch.identifier : 'mouse-look';
+        frLook.active = true;
+        frLook.lastX = touch.clientX; frLook.lastY = touch.clientY;
+    }
+    function lookMove(e) {
+        if (!frLook.active) return;
+        let touch = null;
+        if (e.changedTouches) { for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === frLook.touchId) { touch = e.changedTouches[i]; break; } } if (!touch) return; }
+        else { if (frLook.touchId !== 'mouse-look') return; touch = e; }
+        e.preventDefault();
+        const dx = touch.clientX - frLook.lastX, dy = touch.clientY - frLook.lastY;
+        frPlayer.yaw -= dx * 0.005; frPlayer.pitch -= dy * 0.005;
+        frPlayer.pitch = Math.max(-Math.PI/2.3, Math.min(Math.PI/2.3, frPlayer.pitch));
+        frLook.lastX = touch.clientX; frLook.lastY = touch.clientY;
+    }
+    function lookEnd() { frLook.active = false; frLook.touchId = null; }
+    look.addEventListener('touchstart', lookStart, { passive: false });
+    look.addEventListener('mousedown', lookStart);
+    document.addEventListener('touchmove', lookMove, { passive: false });
+    document.addEventListener('touchend', lookEnd);
+    document.addEventListener('touchcancel', lookEnd);
+    document.addEventListener('mouseup', lookEnd);
+
+    if (!window._frKeysBound) {
+        window._frKeysBound = true;
+        document.addEventListener('keydown', function(e) {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || k === 'ц') frKeys.w = true;
+            if (k === 's' || k === 'ы') frKeys.s = true;
+            if (k === 'a' || k === 'ф') frKeys.a = true;
+            if (k === 'd' || k === 'в') frKeys.d = true;
+        });
+        document.addEventListener('keyup', function(e) {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || k === 'ц') frKeys.w = false;
+            if (k === 's' || k === 'ы') frKeys.s = false;
+            if (k === 'a' || k === 'ф') frKeys.a = false;
+            if (k === 'd' || k === 'в') frKeys.d = false;
+        });
+    }
+}
+function animateFreeRoam() {
+    if (!frRunning) return;
+    frAnimId = requestAnimationFrame(animateFreeRoam);
+    const now = performance.now();
+    const dt = Math.min((now - frLastTime) / 1000, 0.05);
+    frLastTime = now;
+    let mx = 0, mz = 0;
+    if (frJoy.active) { mx = frJoy.dx; mz = frJoy.dy; }
+    if (frKeys.w) mz -= 1; if (frKeys.s) mz += 1; if (frKeys.a) mx -= 1; if (frKeys.d) mx += 1;
+    const mag = Math.hypot(mx, mz);
+    if (mag > 0.05) {
+        mx /= mag; mz /= mag;
+        const speed = 4.5 * Math.min(mag, 1);
+        const cos = Math.cos(frPlayer.yaw), sin = Math.sin(frPlayer.yaw);
+        const worldX = mx * cos + mz * sin;
+        const worldZ = -mx * sin + mz * cos;
+        const nx = frPlayer.x + worldX * speed * dt;
+        const nz = frPlayer.z + worldZ * speed * dt;
+        if (nx > -28 && nx < 28) frPlayer.x = nx;
+        if (nz > -28 && nz < 28) frPlayer.z = nz;
+        frStepTimer -= dt;
+        if (frStepTimer <= 0) { frStepTimer = 0.42; playFootstep(); }
+    }
+    if (frMode2D && frCtx2D) {
+        const canvas = frCtx2D.canvas;
+        const cw = canvas.width, ch = canvas.height;
+        const g = frCtx2D.createLinearGradient(0, 0, 0, ch);
+        g.addColorStop(0, '#1a1a20'); g.addColorStop(1, '#0a0a0c');
+        frCtx2D.fillStyle = g; frCtx2D.fillRect(0, 0, cw, ch);
+        frCtx2D.strokeStyle = '#4a4a55'; frCtx2D.lineWidth = 4;
+        frCtx2D.strokeRect(50, 50, cw - 100, ch - 100);
+        frCtx2D.fillStyle = '#707078';
+        [[cw*0.25,ch*0.3,50],[cw*0.6,ch*0.4,60],[cw*0.4,ch*0.7,55],[cw*0.75,ch*0.65,45]].forEach(function(c) {
+            frCtx2D.fillRect(c[0] - c[2]/2, c[1] - c[2]/2, c[2], c[2]);
+        });
+        frCtx2D.save();
+        frCtx2D.translate(cw/2, ch/2); frCtx2D.rotate(-frPlayer.yaw);
+        frCtx2D.fillStyle = '#d0d0d8';
+        frCtx2D.beginPath(); frCtx2D.arc(0, 0, 15, 0, Math.PI*2); frCtx2D.fill();
+        frCtx2D.fillStyle = '#fff'; frCtx2D.fillRect(-3, -20, 6, 12);
+        frCtx2D.restore();
+        frCtx2D.fillStyle = 'rgba(200,200,210,0.7)';
+        frCtx2D.font = 'bold 20px monospace'; frCtx2D.textAlign = 'center';
+        frCtx2D.fillText('тццц😜', cw/2, ch*0.12);
+    } else if (frCamera && frRenderer) {
+        frCamera.position.set(frPlayer.x, 1.6, frPlayer.z);
+        frCamera.rotation.y = frPlayer.yaw;
+        frCamera.rotation.x = frPlayer.pitch;
+        frRenderer.render(frScene, frCamera);
+    }
+}
+
+function playFootstep() {
+    if (!audioCtx || audioCtx.state !== 'running') return;
+    try {
+        const size = Math.floor(audioCtx.sampleRate * 0.09);
+        const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / size, 2.5) * 0.6;
+        const src = audioCtx.createBufferSource(); src.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 600;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.09);
+        src.connect(filter); filter.connect(g); g.connect(audioCtx.destination); src.start();
+    } catch(e) {}
+}
+let frWindAudio = null, frWindGain = null, birdsTimeoutId = null;
+function startNatureSounds() {
+    if (!audioCtx || audioCtx.state !== 'running') return;
+    try {
+        const size = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+        frWindAudio = audioCtx.createBufferSource(); frWindAudio.buffer = buffer; frWindAudio.loop = true;
+        const wf = audioCtx.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 400; wf.Q.value = 0.7;
+        frWindGain = audioCtx.createGain();
+        frWindGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        frWindGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 2);
+        frWindAudio.connect(wf); wf.connect(frWindGain); frWindGain.connect(audioCtx.destination);
+        frWindAudio.start(); scheduleBirds();
+    } catch(e) {}
+}
+function scheduleBirds() {
+    if (!audioCtx || audioCtx.state !== 'running' || !frRunning) return;
+    const delay = 800 + Math.random() * 2500;
+    birdsTimeoutId = setTimeout(function() {
+        if (!audioCtx || audioCtx.state !== 'running' || !frRunning) return;
+        playBirdChirp(); scheduleBirds();
+    }, delay);
+}
+function playBirdChirp() {
+    if (!audioCtx) return;
+    try {
+        const baseFreq = 1800 + Math.random() * 1400;
+        const n = 2 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) {
+            const t = audioCtx.currentTime + i * (0.08 + Math.random() * 0.05);
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(baseFreq + Math.random() * 200, t);
+            osc.frequency.exponentialRampToValueAtTime(baseFreq + 400 + Math.random() * 300, t + 0.06);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(0.025, t + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(t); osc.stop(t + 0.1);
+        }
+    } catch(e) {}
+}
+function stopNatureSounds() {
+    if (birdsTimeoutId) clearTimeout(birdsTimeoutId);
+    birdsTimeoutId = null;
+    try { if (frWindAudio) { frWindAudio.stop(); frWindAudio.disconnect(); } } catch(e) {}
+    frWindAudio = null;
+}
+
+/* ==== MUSIC ==== */
+const NOTE = { A1:55, A2:110, E3:164.81, F3:174.61, G3:196.00, A3:220.00, C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, Bb4:466.16, C5:523.25, D5:587.33, E5:659.25, G5:783.99 };
+const BPM = 124, BEAT = 60 / BPM, TOTAL_BEATS = 32;
+// FIREBORN (серая) тема
+const MELODY_FB = [[NOTE.E5, 0.5], [NOTE.D5, 0.5], [NOTE.C5, 0.5], [NOTE.Bb4, 0.5], [NOTE.A4, 1], [NOTE.C5, 1], [null, 2], [NOTE.A4, 0.5], [NOTE.C5, 0.5], [NOTE.E5, 0.5], [NOTE.G5, 0.5], [NOTE.F5, 1], [NOTE.E5, 1], [null, 2], [NOTE.C5, 1], [NOTE.Bb4, 0.5], [NOTE.A4, 0.5], [NOTE.G4, 1], [NOTE.A4, 1], [NOTE.C5, 1], [NOTE.E5, 1], [NOTE.D5, 1.5], [NOTE.C5, 0.5], [NOTE.Bb4, 1], [NOTE.A4, 2], [null, 1]];
+const BASS_FB = [[NOTE.A2, 1], [null, 0.5], [NOTE.A2, 0.5], [NOTE.A2, 1], [NOTE.A2, 0.5], [null, 0.5], [NOTE.A2, 1], [null, 0.5], [NOTE.A2, 0.5], [NOTE.A2, 1], [NOTE.A2, 0.5], [null, 0.5], [NOTE.F3, 1], [null, 0.5], [NOTE.F3, 0.5], [NOTE.F3, 1], [NOTE.F3, 0.5], [null, 0.5], [NOTE.F3, 1], [null, 0.5], [NOTE.F3, 0.5], [NOTE.F3, 1], [NOTE.F3, 0.5], [null, 0.5], [NOTE.G3, 1], [null, 0.5], [NOTE.G3, 0.5], [NOTE.G3, 1], [NOTE.G3, 0.5], [null, 0.5], [NOTE.G3, 1], [null, 0.5], [NOTE.G3, 0.5], [NOTE.G3, 1], [NOTE.G3, 0.5], [null, 0.5], [NOTE.A2, 1], [null, 0.5], [NOTE.A2, 0.5], [NOTE.A2, 1], [NOTE.A2, 0.5], [null, 0.5], [NOTE.E3, 1], [null, 0.5], [NOTE.E3, 0.5], [NOTE.E3, 1], [NOTE.E3, 2]];
+const PAD_FB = [[NOTE.A3, 4], [NOTE.F3, 4], [NOTE.G3, 4], [NOTE.A3, 4], [NOTE.F3, 4], [NOTE.G3, 4], [NOTE.A3, 8]];
+// SYNDICATE (старая, красная) тема — более мрачная и медленная
+const MELODY_SYN = [[NOTE.A4, 2], [NOTE.C5, 2], [NOTE.E5, 2], [NOTE.D5, 2], [NOTE.C5, 2], [NOTE.Bb4, 4], [null, 1], [NOTE.A4, 2], [NOTE.G4, 2], [NOTE.F4, 4], [NOTE.E4, 2], [NOTE.F4, 2], [NOTE.G4, 6], [null, 2], [NOTE.A4, 2], [NOTE.C5, 2], [NOTE.E5, 2], [NOTE.G5, 4], [NOTE.F5, 2], [NOTE.E5, 2], [NOTE.D5, 6], [null, 3]];
+const BASS_SYN = [[NOTE.A2, 3], [NOTE.E3, 1], [NOTE.A2, 3], [NOTE.E3, 1], [NOTE.F3, 3], [NOTE.C4, 1], [NOTE.F3, 3], [NOTE.C4, 1], [NOTE.G3, 3], [NOTE.D4, 1], [NOTE.G3, 3], [NOTE.D4, 1], [NOTE.A2, 3], [NOTE.E3, 1], [NOTE.A2, 4]];
+const PAD_SYN = [[NOTE.A3, 8], [NOTE.E3, 8], [NOTE.F3, 8], [NOTE.C4, 8], [NOTE.G3, 8], [NOTE.D4, 8], [NOTE.A3, 16]];
+
+let musicNodes = [], musicScheduled = false, nextLoopTimeout = null, musicCleanupTimeout = null;
+let currentMusicType = 'fireborn';
+
+function initAudio() {
+    if (audioCtx) return;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = currentMusicVolume;
+        try { const comp = audioCtx.createDynamicsCompressor(); comp.threshold.value = -15; comp.knee.value = 20; comp.ratio.value = 6; masterGain.connect(comp); comp.connect(audioCtx.destination); } catch(e) { masterGain.connect(audioCtx.destination); }
+    } catch(e) {}
+}
+function playNote(freq, dur, st, vol, type) {
+    if (!freq || !audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        osc.type = type || 'sawtooth'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.exponentialRampToValueAtTime(vol, st + 0.008);
+        g.gain.setValueAtTime(vol, st + dur - Math.min(0.08, dur * 0.3));
+        g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(st); osc.stop(st + dur + 0.05);
+        musicNodes.push({ osc: osc, g: g });
+    } catch(e) {}
+}
+function playSub(freq, dur, st, vol) {
+    if (!freq || !audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.exponentialRampToValueAtTime(vol, st + 0.01);
+        g.gain.setValueAtTime(vol, st + dur - 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(st); osc.stop(st + dur + 0.05);
+        musicNodes.push({ osc: osc, g: g });
+    } catch(e) {}
+}
+function playPadNote(freq, dur, st, vol) {
+    if (!freq || !audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        osc.type = 'triangle'; osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.linearRampToValueAtTime(vol, st + dur * 0.4);
+        g.gain.setValueAtTime(vol, st + dur * 0.7);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(st); osc.stop(st + dur + 0.05);
+        musicNodes.push({ osc: osc, g: g });
+    } catch(e) {}
+}
+function playKick(st, vol) {
+    if (!audioCtx) return;
+    try { const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(130, st); osc.frequency.exponentialRampToValueAtTime(40, st + 0.12); g.gain.setValueAtTime(0, st); g.gain.linearRampToValueAtTime(vol, st + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.18); osc.connect(g); g.connect(masterGain); osc.start(st); osc.stop(st + 0.2); musicNodes.push({ osc: osc, g: g }); } catch(e) {}
+}
+function playSnare(st, vol) {
+    if (!audioCtx) return;
+    try { const size = Math.floor(audioCtx.sampleRate * 0.12); const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / size, 2); const src = audioCtx.createBufferSource(); src.buffer = buffer; const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 1800; const g = audioCtx.createGain(); g.gain.setValueAtTime(vol, st); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.12); src.connect(filter); filter.connect(g); g.connect(masterGain); src.start(st); musicNodes.push({ osc: src, g: g }); } catch(e) {}
+}
+function playHihat(st, vol) {
+    if (!audioCtx) return;
+    try { const size = Math.floor(audioCtx.sampleRate * 0.04); const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate); const data = buffer.getChannelData(0); for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / size, 3); const src = audioCtx.createBufferSource(); src.buffer = buffer; const filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 8000; const g = audioCtx.createGain(); g.gain.setValueAtTime(vol, st); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.04); src.connect(filter); filter.connect(g); g.connect(masterGain); src.start(st); musicNodes.push({ osc: src, g: g }); } catch(e) {}
+}
+function playMusic() {
+    if (!audioCtx || musicScheduled) return;
+    if (audioCtx.state !== 'running') return;
+    musicScheduled = true;
+    const start = audioCtx.currentTime + 0.15;
+    const isSyn = currentMusicType === 'syndicate';
+    const MELODY = isSyn ? MELODY_SYN : MELODY_FB;
+    const BASS = isSyn ? BASS_SYN : BASS_FB;
+    const PAD = isSyn ? PAD_SYN : PAD_FB;
+    const bpm = isSyn ? 90 : 124;
+    const beat = 60 / bpm;
+    let mt = 0;
+    MELODY.forEach(function(n) { const dur = n[1] * beat; if (n[0]) playNote(n[0], dur * 0.95, start + mt, 0.055, 'sawtooth'); mt += dur; });
+    let bt = 0;
+    BASS.forEach(function(n) { const dur = n[1] * beat; if (n[0]) { playSub(n[0], dur * 0.9, start + bt, 0.20); playNote(n[0] * 2, dur * 0.85, start + bt, 0.03, 'square'); } bt += dur; });
+    let pt = 0;
+    PAD.forEach(function(n) { const dur = n[1] * beat; if (n[0]) playPadNote(n[0], dur * 0.95, start + pt, 0.022); pt += dur; });
+    const totalBeats = Math.floor(mt / beat);
+    for (let i = 0; i < totalBeats; i++) {
+        const t = start + i * beat;
+        if (i % 4 === 0) playKick(t, 0.24);
+        if (i % 4 === 2) playKick(t, 0.18);
+        if (i % 4 === 1 || i % 4 === 3) playSnare(t, 0.10);
+        playHihat(t, 0.035);
+        playHihat(t + beat / 2, 0.025);
+    }
+    const totalMs = mt * 1000;
+    nextLoopTimeout = setTimeout(function() { musicScheduled = false; if (audioCtx && audioCtx.state === 'running') playMusic(); }, totalMs - 80);
+    musicCleanupTimeout = setTimeout(function() { musicNodes = []; }, totalMs);
+}
+function stopMusic() {
+    if (nextLoopTimeout) clearTimeout(nextLoopTimeout);
+    if (musicCleanupTimeout) clearTimeout(musicCleanupTimeout);
+    nextLoopTimeout = null; musicCleanupTimeout = null; musicScheduled = false;
+    musicNodes.forEach(function(n) { try { n.osc.stop(); } catch(e) {} });
+    musicNodes = [];
+}
+function ensureMenuMusicPlaying() {
+    if (!audioCtx) return;
+    if (musicScheduled) return;
+    if (masterGain) masterGain.gain.value = currentMusicVolume;
+    setTimeout(function() { if (audioCtx && audioCtx.state === 'running') playMusic(); }, 100);
+}
+
+let introBirdsTimeout = null, introWindAudio = null;
+function playFirebornIntro() {
+    const ls = $('login-screen'); if (ls) ls.classList.remove('active');
+    const fl = $('fireborn-loading'); if (fl) fl.classList.add('active');
+    if (audioCtx && audioCtx.state === 'running') {
+        if (!musicScheduled) playMusic();
+        setTimeout(startIntroNature, 2500);
+    }
+    const texts = ['Загрузка...', 'Подключение...', 'Загрузка ресурсов...', 'Почти готово...'];
+    let t = 0;
+    const iv = setInterval(function() {
+        t++;
+        const el = $('fb-load-text');
+        if (t === 3 && el) el.textContent = texts[1];
+        if (t === 6 && el) el.textContent = texts[2];
+        if (t === 8 && el) el.textContent = texts[3];
+        if (t === 9) { if (masterGain && audioCtx) { try { masterGain.gain.cancelScheduledValues(audioCtx.currentTime); masterGain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5); } catch(e) {} } }
+        if (t >= 12) {
+            clearInterval(iv);
+            const fl2 = $('fireborn-loading'); if (fl2) fl2.classList.remove('active');
+            const ls2 = $('login-screen'); if (ls2) ls2.classList.add('active');
+            setTimeout(function() { if (masterGain && audioCtx) { try { masterGain.gain.cancelScheduledValues(audioCtx.currentTime); masterGain.gain.linearRampToValueAtTime(currentMusicVolume, audioCtx.currentTime + 0.8); } catch(e) {} } }, 500);
+        }
+    }, 500);
+}
+function startIntroNature() {
+    if (!audioCtx || audioCtx.state !== 'running') return;
+    try {
+        const size = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+        introWindAudio = audioCtx.createBufferSource(); introWindAudio.buffer = buffer; introWindAudio.loop = true;
+        const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 350; filter.Q.value = 0.6;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 1);
+        introWindAudio.connect(filter); filter.connect(g); g.connect(audioCtx.destination);
+        introWindAudio.start();
+        const birdChirp = function() {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            try {
+                const baseFreq = 1800 + Math.random() * 1400;
+                const n = 2 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < n; i++) {
+                    const t = audioCtx.currentTime + i * (0.08 + Math.random() * 0.05);
+                    const osc = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(baseFreq + Math.random() * 200, t);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq + 400 + Math.random() * 300, t + 0.06);
+                    g2.gain.setValueAtTime(0.0001, t);
+                    g2.gain.linearRampToValueAtTime(0.025, t + 0.01);
+                    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+                    osc.connect(g2); g2.connect(audioCtx.destination); osc.start(t); osc.stop(t + 0.1);
+                }
+            } catch(e) {}
+            introBirdsTimeout = setTimeout(birdChirp, 700 + Math.random() * 2000);
+        };
+        birdChirp();
+    } catch(e) {}
+}
+
+let fpsLastTime = performance.now(), fpsFrames = 0;
+function updateFPSMeter() {
+    fpsFrames++;
+    const now = performance.now();
+    if (now - fpsLastTime >= 1000) {
+        const fps = Math.round((fpsFrames * 1000) / (now - fpsLastTime));
+        const el = $('fps-value'); if (el) el.textContent = fps;
+        fpsFrames = 0; fpsLastTime = now;
+    }
+    requestAnimationFrame(updateFPSMeter);
+}
+
+function setupRiseSplash() {
+    const splash = $('rise-splash'); if (!splash) return;
+    splash.classList.add('active');
+    splash.style.display = 'flex';
+    let tapped = false;
+    const onTap = function() {
+        if (tapped) return;
+        tapped = true;
+        initAudio();
+        if (audioCtx) { if (audioCtx.state === 'running') playMusic(); else audioCtx.resume().then(function() { setTimeout(playMusic, 50); }).catch(function() {}); }
+        try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function() {}); } catch(e) {}
+        setTimeout(checkOrientation, 200);
+        splash.classList.remove('active');
+        splash.style.display = 'none';
+        playFirebornIntro();
+    };
+    splash.addEventListener('pointerdown', onTap);
+    splash.addEventListener('touchstart', onTap);
+    splash.addEventListener('click', onTap);
+}
+
+try {
+    checkOrientation();
+    updateCurrencyUI();
+    renderInventory();
+    renderMail();
+    updateAvatarUI();
+    requestAnimationFrame(updateFPSMeter);
+    setupRiseSplash();
+} catch(e) { console.error('Ошибка инициализации:', e); }
+</script>
+</body>
+</html>
